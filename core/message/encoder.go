@@ -1,9 +1,9 @@
-package testing
+package message
 
 import (
 	"encoding/json"
 
-	"github.com/mindfork/mindfork/message"
+	mfm "github.com/mindfork/mindfork/message"
 )
 
 // Encoder implements mindfork.Encoder using encoding/json.Encoder.
@@ -12,6 +12,6 @@ type Encoder struct {
 }
 
 // Encode implements mindfork.Encoder for Encoder.
-func (d *Encoder) Encode(m message.Message) error {
+func (d *Encoder) Encode(m mfm.Message) error {
 	return d.Encoder.Encode(m)
 }

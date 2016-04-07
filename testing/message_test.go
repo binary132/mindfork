@@ -3,15 +3,15 @@ package testing_test
 import (
 	"testing"
 
-	mf "github.com/mindfork/mindfork"
+	"github.com/mindfork/mindfork/message"
 	t "github.com/mindfork/mindfork/testing"
 
 	. "gopkg.in/check.v1"
 )
 
 var (
-	_ = mf.MessageMaker(&t.MessageMaker{})
-	_ = mf.Message(&t.Message{})
+	_ = message.MessageMaker(&t.MessageMaker{})
+	_ = message.Message(&t.Message{})
 )
 
 // Test hooks up gocheck into the "go test" runner.

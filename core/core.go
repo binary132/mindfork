@@ -3,7 +3,9 @@ package core
 import (
 	"errors"
 
-	mf "github.com/mindfork/mindfork"
+	"github.com/mindfork/mindfork/message"
+
+	coremsg "github.com/mindfork/mindfork/core/message"
 )
 
 // Core is a base implementation of the mindfork engine.
@@ -11,13 +13,13 @@ type Core struct {
 }
 
 // Serve implements server.Server
-func (c *Core) Serve(m mf.Message) mf.Message {
-	if m == mf.Message(nil) || m == nil {
-		return mf.MakeError(errors.New("nil Message"))
+func (c *Core) Serve(m message.Message) message.Message {
+	if m == message.Message(nil) || m == nil {
+		return message.MakeError(errors.New("nil Message"))
 	}
 
 	switch tM := m.(type) {
-	case Intention:
+	case coremsg.Intention:
 		return c.Intend(tM)
 	}
 
@@ -25,6 +27,6 @@ func (c *Core) Serve(m mf.Message) mf.Message {
 }
 
 // Intend applies an Intention to a Core.
-func (c *Core) Intend(i Intention) Result {
-	return Result{Message: "foo"}
+func (c *Core) Intend(i coremsg.Intention) Result {
+	return message.Message("foo")
 }

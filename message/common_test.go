@@ -1,4 +1,4 @@
-package mindfork_test
+package message_test
 
 import (
 	"testing"
@@ -9,6 +9,6 @@ import (
 // Test hooks up gocheck into the "go test" runner.
 func Test(t *testing.T) { TestingT(t) }
 
-type MindforkSuite struct{}
+type MessageSuite struct{}
 
-var _ = Suite(&MindforkSuite{})
+var _ = Suite(&MessageSuite{})

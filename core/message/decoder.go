@@ -1,15 +1,15 @@
-package testing
+package message
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
 
-	"github.com/mindfork/mindfork/message"
+	mfm "github.com/mindfork/mindfork/message"
 )
 
 type jsonMessage struct {
-	Type       message.Type
+	Type       mfm.Type
 	RawMessage json.RawMessage
 }
 
@@ -19,7 +19,7 @@ type Decoder struct {
 }
 
 // Decode implements mindfork.Decoder for Decoder.
-func (d *Decoder) Decode(m message.Message) error {
+func (d *Decoder) Decode(m mfm.Message) error {
 	jm := new(jsonMessage)
 
 	if err := d.Decoder.Decode(jm); err != nil {
@@ -27,12 +27,15 @@ func (d *Decoder) Decode(m message.Message) error {
 	}
 
 	switch jm.Type {
-	case Test:
-		msg := new(Message)
+	case TIntention:
+		msg := new(Intention)
 		if err := json.Unmarshal(jm.RawMessage, msg); err != nil {
 			return err
 		}
-		return message.ReflectSet(m, *msg)
+		if err := Validate(*msg); err != nil {
+			return err
+		}
+		return mfm.ReflectSet(m, *msg)
 	case "":
 		return errors.New("no message Type received")
 	default:

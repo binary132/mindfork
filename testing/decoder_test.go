@@ -3,20 +3,20 @@ package testing_test
 import (
 	"bytes"
 
-	"github.com/mindfork/mindfork"
+	"github.com/mindfork/mindfork/message"
 	"github.com/mindfork/mindfork/testing"
 
 	jc "github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
 )
 
-var _ = mindfork.Decoder(&testing.Decoder{})
+var _ = message.Decoder(&testing.Decoder{})
 
 func (ts *TestingSuite) TestDecode(c *C) {
 	for i, test := range []struct {
 		should    string
 		given     string
-		expect    mindfork.Message
+		expect    message.Message
 		expectErr string
 	}{{
 		should: "error on broken JSON",
@@ -26,7 +26,7 @@ func (ts *TestingSuite) TestDecode(c *C) {
 	}, {
 		should: "work for simple case",
 		given:  `{"Type":"test","RawMessage":{"X":5}}`,
-		expect: mindfork.Message(&testing.Message{X: 5}),
+		expect: message.Message(&testing.Message{X: 5}),
 	}} {
 		c.Logf("test %d: should %s", i, test.should)
 		c.Logf("  given: %s", test.given)

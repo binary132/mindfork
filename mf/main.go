@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/mindfork/mindfork/core"
+	coremsg "github.com/mindfork/mindfork/core/message"
 	mfh "github.com/mindfork/mindfork/server/http"
 
 	htr "github.com/julienschmidt/httprouter"
@@ -20,7 +21,7 @@ func main() {
 	// Run the Core as a mindfork.Server using the httprouter.Router.
 	err := http.ListenAndServe(
 		path,
-		mfh.Serve(&core.Core{}, core.MakeMessage)(httpMux, "/"),
+		mfh.Serve(&core.Core{}, &coremsg.MessageMaker{})(httpMux, "/"),
 	)
 	if err != nil {
 		log.Panic(err)

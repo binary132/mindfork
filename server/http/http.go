@@ -1,13 +1,12 @@
 package http
 
 import (
-	"encoding/json"
-	"errors"
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/url"
 
-	mf "github.com/mindfork/mindfork"
+	"github.com/mindfork/mindfork/message"
 	"github.com/mindfork/mindfork/server"
 
 	htr "github.com/julienschmidt/httprouter"
@@ -18,88 +17,104 @@ import (
 // mutates the Server, this function will then cause mutation.  To avoid races,
 // Handle must therefore be synchronized or pure.
 func Serve(
-	s server.Server, m mf.MessageMaker,
+	s server.Server, m message.MessageMaker,
 ) func(*htr.Router, string) *htr.Router {
 	return func(r *htr.Router, path string) *htr.Router {
 		if path == "/" {
 			path = ""
 		}
 
-		// r.POST(path+"/:type/:m", RESTfully(s, m, "type"))
-		r.POST(path+"/:m", Raw(s, m))
+		r.POST(path, RawBody(s, m))
 
 		return r
 	}
 }
 
-func Raw(s server.Server, m mf.MessageMaker) htr.Handle {
+// RawURL is an httprouter.Handle which handles messages on path, with escaped
+// Message contents in the URL.
+func RawURL(s server.Server, m message.MessageMaker, path string) htr.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps htr.Params) {
-		q := ps.ByName("m")
+		var (
+			de  message.Decoder
+			en  = m.NewEncoder(w)
+			msg = new(message.Message)
+		)
+
+		q := ps.ByName(path)
+		if q == "" {
+			http.Error(
+				w,
+				"no message passed",
+				http.StatusBadRequest,
+			)
+			return
+		}
 
 		qu, err := url.QueryUnescape(q)
 		if err != nil {
-			WriteError(w, err)
+			problem := fmt.Sprintf(
+				"failed to unescape URL: %s",
+				err,
+			)
+			http.Error(w, problem, http.StatusBadRequest)
+			return
+		}
+		de = m.NewDecoder(bytes.NewReader([]byte(qu)))
+
+		if err := de.Decode(msg); err != nil {
+			problem := fmt.Sprintf(
+				"failed to decode message: %s",
+				err,
+			)
+			http.Error(
+				w,
+				problem,
+				http.StatusInternalServerError,
+			)
+			return
 		}
 
-		bs, err := server.Serve(s, m, []byte(qu))
-		if err != nil {
-			WriteError(w, err)
-		}
-
-		if _, err = w.Write(bs); err != nil {
-			WriteError(w, err)
-		}
-		if q != "" {
-			WriteError(w, errors.New(
-				"no message received",
-			))
-
+		if err := en.Encode(s.Serve(msg)); err != nil {
+			problem := fmt.Sprintf(
+				"failed to encode message: %s",
+				err,
+			)
+			http.Error(w, problem, http.StatusInternalServerError)
 			return
 		}
 	}
 }
 
-// // RESTfully is an httprouter.Handle handling the given Server's Handle with the
-// // given param name.
-// func RESTfully(s server.Server, m mf.MessageMaker, name string) htr.Handle {
-// 	return func(w http.ResponseWriter, r *http.Request, ps htr.Params) {
-// 		// First find out whether the type was passed.
-// 		if t := ps.ByName(name); t != "" {
-// 			mbs, err := json.Marshal(mf.MessageBytes{
-// 				Type: t,
-// 				RawMessage: ps.ByName("name string")
-// 			}
-// 			bs, err := server.Serve(s, m, []byte(msg))
-// 			if err != nil {
-// 				WriteError(w, err)
-// 			}
-//
-// 			if _, err = w.Write(bs); err != nil {
-// 				WriteError(w, err)
-// 			}
-//
-// 			return
-// 		}
-//
-// 		WriteError(w, errors.New(
-// 			"message must be passed as /<type>/msg",
-// 		))
-// 	}
-// }
+// RawBody is an httprouter.Handle which handles messages on path, with escaped
+// Message contents in the URL.
+func RawBody(s server.Server, m message.MessageMaker) htr.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps htr.Params) {
+		var (
+			de  = m.NewDecoder(r.Body)
+			en  = m.NewEncoder(w)
+			msg = new(message.Message)
+		)
 
-// WriteError writes an error to the ResponseWriter as a server.Error Message.
-func WriteError(w http.ResponseWriter, e error) {
-	bs, err := json.Marshal(server.Error{Err: e})
-	if err != nil {
-		http.Error(w, fmt.Sprintf(
-			"failed to marshal error message: %s", err.Error(),
-		), http.StatusInternalServerError)
-		return
-	}
+		if err := de.Decode(msg); err != nil {
+			problem := fmt.Sprintf(
+				"failed to decode message: %s",
+				err,
+			)
+			http.Error(
+				w,
+				problem,
+				http.StatusInternalServerError,
+			)
+			return
+		}
 
-	if _, err = w.Write(bs); err != nil {
-		http.Error(w, fmt.Sprintf(
-			"failed to write error message: %s", err.Error(),
-		), http.StatusInternalServerError)
+		if err := en.Encode(s.Serve(msg)); err != nil {
+			problem := fmt.Sprintf(
+				"failed to encode message: %s",
+				err,
+			)
+			http.Error(w, problem, http.StatusInternalServerError)
+			return
+		}
 	}
 }

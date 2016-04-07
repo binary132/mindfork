@@ -1,4 +1,4 @@
-package server_test
+package testing_test
 
 import (
 	"testing"
@@ -9,6 +9,6 @@ import (
 // Test hooks up gocheck into the "go test" runner.
 func Test(t *testing.T) { TestingT(t) }
 
-type ServerSuite struct{}
+type TestingSuite struct{}
 
-var _ = Suite(&ServerSuite{})
+var _ = Suite(&TestingSuite{})

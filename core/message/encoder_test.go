@@ -1,27 +1,31 @@
-package testing_test
+package message_test
 
 import (
 	"bytes"
 
+	coremsg "github.com/mindfork/mindfork/core/message"
 	"github.com/mindfork/mindfork/message"
-	"github.com/mindfork/mindfork/testing"
 
 	jc "github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
 )
 
-var _ = message.Encoder(&testing.Encoder{})
+var _ = message.Encoder(&coremsg.Encoder{})
 
-func (ts *TestingSuite) TestEncode(c *C) {
+func (ts *MessageSuite) TestEncode(c *C) {
 	w := &bytes.Buffer{}
-	mm := &testing.MessageMaker{}
+	mm := &coremsg.MessageMaker{}
 	enc := mm.NewEncoder(w)
 
 	for i, test := range []struct {
 		should string
 		given  message.Message
 		expect string
-	}{{"encode a simple Message", testing.Message{X: 5}, `{"X":5}`}} {
+	}{{
+		should: "marshal a simple Intention using JSON",
+		given:  coremsg.Intention{},
+		expect: `{"Who":"","What":""}`,
+	}} {
 		c.Logf("test %d: should %s", i, test.should)
 		c.Logf("  given: %v", test.given)
 

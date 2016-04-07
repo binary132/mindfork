@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	mf "github.com/mindfork/mindfork"
 	"github.com/mindfork/mindfork/core"
+	"github.com/mindfork/mindfork/message"
 
 	jc "github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
@@ -21,16 +21,16 @@ var _ = Suite(&CoreSuite{})
 func (cs *CoreSuite) TestServe(c *C) {
 	for i, t := range []struct {
 		should string
-		given  mf.Message
-		expect mf.Message
+		given  message.Message
+		expect message.Message
 	}{{
 		should: "return an error for a nil",
 		given:  nil,
-		expect: mf.Error{Err: errors.New("nil Message")},
+		expect: message.Error{Err: errors.New("nil Message")},
 	}, {
 		should: "return an error for a nil Message",
-		given:  mf.Message(nil),
-		expect: mf.Error{Err: errors.New("nil Message")},
+		given:  message.Message(nil),
+		expect: message.Error{Err: errors.New("nil Message")},
 	}} {
 		c.Logf("test %d: %s", i, t.should)
 		c.Check(new(core.Core).Serve(t.given), jc.DeepEquals, t.expect)

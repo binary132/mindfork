@@ -1,4 +1,4 @@
-package mindfork
+package message
 
 // Error is a Message containing an error.
 type Error struct {

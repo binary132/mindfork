@@ -1,9 +1,9 @@
-package mindfork_test
+package message_test
 
 import (
 	"errors"
 
-	mf "github.com/mindfork/mindfork"
+	"github.com/mindfork/mindfork/message"
 
 	. "gopkg.in/check.v1"
 )
@@ -14,7 +14,7 @@ func (t *testError) Error() string {
 	return "TestError Result"
 }
 
-func (m *MindforkSuite) TestErrorError(c *C) {
+func (m *MessageSuite) TestErrorError(c *C) {
 	for i, t := range []struct {
 		should string
 		given  error
@@ -33,26 +33,26 @@ func (m *MindforkSuite) TestErrorError(c *C) {
 		expect: "TestError Result",
 	}} {
 		c.Logf("test %d: should %s", i, t.should)
-		e := mf.Error{Err: t.given}
+		e := message.Error{Err: t.given}
 		c.Check(e.Error(), Equals, t.expect)
 	}
 }
 
-func (m *MindforkSuite) TestMakeError(c *C) {
+func (m *MessageSuite) TestMakeError(c *C) {
 	for i, t := range []struct {
 		should string
 		given  error
-		expect mf.Error
+		expect message.Error
 	}{{
 		should: "make an Error containing a nil error",
 		given:  nil,
-		expect: mf.Error{Err: nil},
+		expect: message.Error{Err: nil},
 	}, {
 		should: "make an Error wrapping a non-nil error",
 		given:  errors.New("an error"),
-		expect: mf.Error{Err: errors.New("an error")},
+		expect: message.Error{Err: errors.New("an error")},
 	}} {
 		c.Logf("test %d: should %s", i, t.should)
-		c.Check(mf.MakeError(t.given), DeepEquals, t.expect)
+		c.Check(message.MakeError(t.given), DeepEquals, t.expect)
 	}
 }
