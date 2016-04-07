@@ -20,10 +20,10 @@ func Serve(
 	s server.Server, m message.MessageMaker,
 ) func(*htr.Router, string) *htr.Router {
 	return func(r *htr.Router, path string) *htr.Router {
-		if path == "/" {
-			path = ""
-		}
-
+		// if path == "/" {
+		// 	path = ""
+		// }
+		//
 		r.POST(path, RawBody(s, m))
 
 		return r
