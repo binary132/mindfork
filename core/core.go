@@ -28,5 +28,5 @@ func (c *Core) Serve(m message.Message) message.Message {
 
 // Intend applies an Intention to a Core.
 func (c *Core) Intend(i coremsg.Intention) Result {
-	return message.Message("foo")
+	return i
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/mindfork/mindfork/core"
+	coremsg "github.com/mindfork/mindfork/core/message"
 	"github.com/mindfork/mindfork/message"
 
 	jc "github.com/juju/testing/checkers"
@@ -19,6 +20,8 @@ type CoreSuite struct{}
 var _ = Suite(&CoreSuite{})
 
 func (cs *CoreSuite) TestServe(c *C) {
+	mfCore := new(core.Core)
+
 	for i, t := range []struct {
 		should string
 		given  message.Message
@@ -31,8 +34,12 @@ func (cs *CoreSuite) TestServe(c *C) {
 		should: "return an error for a nil Message",
 		given:  message.Message(nil),
 		expect: message.Error{Err: errors.New("nil Message")},
+	}, {
+		should: "echo a non-nil Intention",
+		given:  message.Message(coremsg.Intention{}),
+		expect: message.Message(coremsg.Intention{}),
 	}} {
 		c.Logf("test %d: %s", i, t.should)
-		c.Check(new(core.Core).Serve(t.given), jc.DeepEquals, t.expect)
+		c.Check(mfCore.Serve(t.given), jc.DeepEquals, t.expect)
 	}
 }
