@@ -1,11 +1,6 @@
 package testing
 
-import (
-	"encoding/json"
-	"io"
-
-	"github.com/mindfork/mindfork/message"
-)
+import "github.com/mindfork/mindfork/message"
 
 const (
 	Test message.Type = "test"
@@ -15,14 +10,14 @@ const (
 type MessageMaker struct {
 }
 
-// NewEncoder implements mindfork.MessageMaker NewEncoder.
-func (t *MessageMaker) NewEncoder(w io.Writer) message.Encoder {
-	return &Encoder{*json.NewEncoder(w)}
+// Encoder implements mindfork.MessageMaker Encoder.
+func (t *MessageMaker) Encoder() message.Encoder {
+	return Encode
 }
 
-// NewDecoder implements mindfork.MessageMaker NewDecoder.
-func (t *MessageMaker) NewDecoder(r io.Reader) message.Decoder {
-	return &Decoder{*json.NewDecoder(r)}
+// Decoder implements mindfork.MessageMaker Decoder.
+func (t *MessageMaker) Decoder() message.Decoder {
+	return Decode
 }
 
 // Message is a mindfork.Message that testing.MessageMaker exercises.

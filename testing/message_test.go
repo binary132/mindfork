@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	_ = message.MessageMaker(&t.MessageMaker{})
+	_ = message.Maker(&t.MessageMaker{})
 	_ = message.Message(&t.Message{})
 )
 
@@ -49,7 +49,7 @@ var _ = Suite(&TestingSuite{})
 // 		}
 //
 // 		c.Assert(err, jc.ErrorIsNil)
-// 		c.Check(string(bs.Bytes()), Matches, test.expect+"\n")
+// 		c.Check(string(bs.Bytes()), Matches, test.expect)
 // 	}
 // }
 //

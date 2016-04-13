@@ -1,8 +1,6 @@
 package testing_test
 
 import (
-	"bytes"
-
 	"github.com/mindfork/mindfork/message"
 	"github.com/mindfork/mindfork/testing"
 
@@ -10,7 +8,7 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-var _ = message.Decoder(&testing.Decoder{})
+var _ = message.Decoder(testing.Decode)
 
 func (ts *TestingSuite) TestDecode(c *C) {
 	for i, test := range []struct {
@@ -26,20 +24,12 @@ func (ts *TestingSuite) TestDecode(c *C) {
 	}, {
 		should: "work for simple case",
 		given:  `{"Type":"test","RawMessage":{"X":5}}`,
-		expect: message.Message(&testing.Message{X: 5}),
+		expect: testing.Message{X: 5},
 	}} {
 		c.Logf("test %d: should %s", i, test.should)
 		c.Logf("  given: %s", test.given)
 
-		r := &bytes.Buffer{}
-		mm := &testing.MessageMaker{}
-		dec := mm.NewDecoder(r)
-
-		_, err := r.WriteString(test.given)
-		c.Assert(err, jc.ErrorIsNil)
-
-		m := new(testing.Message)
-		err = dec.Decode(m)
+		m, err := testing.Decode([]byte(test.given))
 
 		if test.expectErr != "" {
 			c.Check(err, ErrorMatches, test.expectErr)

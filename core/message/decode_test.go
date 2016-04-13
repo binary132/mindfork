@@ -1,7 +1,6 @@
 package message_test
 
 import (
-	"bytes"
 	"fmt"
 
 	coremsg "github.com/mindfork/mindfork/core/message"
@@ -10,6 +9,8 @@ import (
 	jc "github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
 )
+
+var _ = mfm.Decoder(coremsg.Decode)
 
 func (m *MessageSuite) TestDecode(c *C) {
 	for i, t := range []struct {
@@ -42,6 +43,16 @@ func (m *MessageSuite) TestDecode(c *C) {
 			Who:  "Bodie",
 			What: "To seek the Holy Grail",
 		}),
+	}, {
+		should:    "make a valid Source",
+		givenType: string(coremsg.TSource),
+		given:     `{}`,
+		expect:    mfm.Message(coremsg.Source{}),
+	}, {
+		should:    "make a valid Echo",
+		givenType: string(coremsg.TEcho),
+		given:     `{}`,
+		expect:    mfm.Message(coremsg.Echo{}),
 	}} {
 		c.Logf("test %d: should %s", i, t.should)
 		bs := []byte(fmt.Sprintf(
@@ -49,15 +60,13 @@ func (m *MessageSuite) TestDecode(c *C) {
 			"Type", t.givenType, "RawMessage", t.given,
 		))
 
-		m := new(mfm.Message)
-		de := (&coremsg.MessageMaker{}).NewDecoder(bytes.NewReader(bs))
-		err := de.Decode(m)
+		m, err := coremsg.Decode(bs)
 		if t.expectErr != "" {
 			c.Check(err, ErrorMatches, t.expectErr)
 			continue
 		}
 
 		c.Assert(err, jc.ErrorIsNil)
-		c.Check(*m, jc.DeepEquals, t.expect)
+		c.Check(m, jc.DeepEquals, t.expect)
 	}
 }

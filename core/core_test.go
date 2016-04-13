@@ -35,9 +35,24 @@ func (cs *CoreSuite) TestServe(c *C) {
 		given:  message.Message(nil),
 		expect: message.Error{Err: errors.New("nil Message")},
 	}, {
-		should: "echo a non-nil Intention",
-		given:  message.Message(coremsg.Intention{}),
-		expect: message.Message(coremsg.Intention{}),
+		should: "echo for an Echo",
+		given:  coremsg.Echo(struct{}{}),
+		expect: message.Message(coremsg.Echo(struct{}{})),
+	}, {
+		should: "return source for a Source",
+		given:  coremsg.Source(struct{}{}),
+		expect: coremsg.Result{struct {
+			Source  string
+			License string
+		}{"github.com/mindfork/mindfork", "Affero GPL"}, coremsg.Error{nil}},
+	}, {
+		should: "Intend for an Intention",
+		given:  coremsg.Intention{},
+		expect: coremsg.Result{coremsg.Intention{}, coremsg.Error{nil}},
+	}, {
+		should: "return error for unknown type",
+		given:  message.Message(5),
+		expect: coremsg.Error{Err: errors.New("unknown Message type")},
 	}} {
 		c.Logf("test %d: %s", i, t.should)
 		c.Check(mfCore.Serve(t.given), jc.DeepEquals, t.expect)

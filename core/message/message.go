@@ -1,26 +1,17 @@
 package message
 
-import (
-	"encoding/json"
-	"io"
-
-	mfm "github.com/mindfork/mindfork/message"
-)
+import mfm "github.com/mindfork/mindfork/message"
 
 const (
 	TIntention mfm.Type = "intention"
+	TEcho      mfm.Type = "echo"
+	TSource    mfm.Type = "source"
 )
 
-// MessageMaker is a testing implementation of mindfork.MessageMaker for JSON.
-type MessageMaker struct {
-}
+type Echo struct{}
+type Source struct{}
 
-// NewEncoder implements mindfork.MessageMaker NewEncoder.
-func (t *MessageMaker) NewEncoder(w io.Writer) mfm.Encoder {
-	return &Encoder{*json.NewEncoder(w)}
-}
-
-// NewDecoder implements mindfork.MessageMaker NewDecoder.
-func (t *MessageMaker) NewDecoder(r io.Reader) mfm.Decoder {
-	return &Decoder{*json.NewDecoder(r)}
+type Result struct {
+	mfm.Message
+	Error
 }

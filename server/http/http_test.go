@@ -42,7 +42,7 @@ func (h *HTTPSuite) TestServe(c *C) {
 		path:   "",
 		arg:    `{"Type":foo"}`,
 		expectBody: `failed to decode message: invalid character 'o'` +
-			` in literal false (expecting 'a')`,
+			` in literal false (expecting 'a')` + "\n",
 		expectMessages: nil,
 		expectCode:     500,
 	}, {
@@ -80,7 +80,7 @@ func (h *HTTPSuite) TestServe(c *C) {
 		c.Assert(err, jc.ErrorIsNil)
 
 		htr.ServeHTTP(w, req)
-		c.Check(w.Body.String(), Equals, test.expectBody+"\n")
+		c.Check(w.Body.String(), Equals, test.expectBody)
 		c.Check(srv.Messages, jc.DeepEquals, test.expectMessages)
 		c.Check(w.Code, Equals, test.expectCode)
 	}
@@ -101,7 +101,7 @@ func (h *HTTPSuite) TestRawURL(c *C) {
 		path:   "",
 		arg:    `{"Type":foo"}`,
 		expectBody: `failed to decode message: invalid character 'o'` +
-			` in literal false (expecting 'a')`,
+			` in literal false (expecting 'a')` + "\n",
 		expectCode: 500,
 	}, {
 		should:     "echo a message",
@@ -128,7 +128,7 @@ func (h *HTTPSuite) TestRawURL(c *C) {
 		c.Assert(err, jc.ErrorIsNil)
 
 		htr.ServeHTTP(w, req)
-		c.Check(w.Body.String(), Equals, test.expectBody+"\n")
+		c.Check(w.Body.String(), Equals, test.expectBody)
 		c.Check(w.Code, Equals, test.expectCode)
 	}
 }
@@ -148,7 +148,7 @@ func (h *HTTPSuite) TestRawBody(c *C) {
 		path:   "",
 		arg:    `{"Type":foo"}`,
 		expectBody: `failed to decode message: invalid character 'o'` +
-			` in literal false (expecting 'a')`,
+			` in literal false (expecting 'a')` + "\n",
 		expectCode: 500,
 	}, {
 		should:     "echo a message",
@@ -174,7 +174,7 @@ func (h *HTTPSuite) TestRawBody(c *C) {
 		c.Assert(err, jc.ErrorIsNil)
 
 		htr.ServeHTTP(w, req)
-		c.Check(w.Body.String(), Equals, test.expectBody+"\n")
+		c.Check(w.Body.String(), Equals, test.expectBody)
 		c.Check(w.Code, Equals, test.expectCode)
 	}
 }

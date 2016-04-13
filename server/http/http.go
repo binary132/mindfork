@@ -1,8 +1,8 @@
 package http
 
 import (
-	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 
@@ -17,7 +17,7 @@ import (
 // mutates the Server, this function will then cause mutation.  To avoid races,
 // Handle must therefore be synchronized or pure.
 func Serve(
-	s server.Server, m message.MessageMaker,
+	s server.Server, m message.Maker,
 ) func(*htr.Router, string) *htr.Router {
 	return func(r *htr.Router, path string) *htr.Router {
 		r.POST(path, RawBody(s, m))
@@ -28,14 +28,9 @@ func Serve(
 
 // RawURL is an httprouter.Handle which handles messages on path, with escaped
 // Message contents in the URL.
-func RawURL(s server.Server, m message.MessageMaker, path string) htr.Handle {
+func RawURL(s server.Server, m message.Maker, path string) htr.Handle {
+	encode, decode := m.Encoder(), m.Decoder()
 	return func(w http.ResponseWriter, r *http.Request, ps htr.Params) {
-		var (
-			de  message.Decoder
-			en  = m.NewEncoder(w)
-			msg = new(message.Message)
-		)
-
 		q := ps.ByName(path)
 		if q == "" {
 			http.Error(
@@ -55,9 +50,9 @@ func RawURL(s server.Server, m message.MessageMaker, path string) htr.Handle {
 			http.Error(w, problem, http.StatusBadRequest)
 			return
 		}
-		de = m.NewDecoder(bytes.NewReader([]byte(qu)))
 
-		if err := de.Decode(msg); err != nil {
+		msg, err := decode([]byte(qu))
+		if err != nil {
 			problem := fmt.Sprintf(
 				"failed to decode message: %s",
 				err,
@@ -70,28 +65,51 @@ func RawURL(s server.Server, m message.MessageMaker, path string) htr.Handle {
 			return
 		}
 
-		if err := en.Encode(s.Serve(*msg)); err != nil {
+		bs, err := encode(s.Serve(msg))
+		if err != nil {
 			problem := fmt.Sprintf(
 				"failed to encode message: %s",
 				err,
 			)
 			http.Error(w, problem, http.StatusInternalServerError)
 			return
+		}
+
+		if _, err = w.Write(bs); err != nil {
+			problem := fmt.Sprintf(
+				"failed to write response: %s",
+				err,
+			)
+			http.Error(
+				w,
+				problem,
+				http.StatusInternalServerError,
+			)
 		}
 	}
 }
 
 // RawBody is an httprouter.Handle which handles messages on path, with escaped
 // Message contents in the URL.
-func RawBody(s server.Server, m message.MessageMaker) htr.Handle {
+func RawBody(s server.Server, m message.Maker) htr.Handle {
+	encode, decode := m.Encoder(), m.Decoder()
 	return func(w http.ResponseWriter, r *http.Request, ps htr.Params) {
-		var (
-			de  = m.NewDecoder(r.Body)
-			en  = m.NewEncoder(w)
-			msg = new(message.Message)
-		)
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			problem := fmt.Sprintf(
+				"failed to read request body: %s",
+				err,
+			)
+			http.Error(
+				w,
+				problem,
+				http.StatusBadRequest,
+			)
+			return
+		}
 
-		if err := de.Decode(msg); err != nil {
+		msg, err := decode(body)
+		if err != nil {
 			problem := fmt.Sprintf(
 				"failed to decode message: %s",
 				err,
@@ -104,13 +122,26 @@ func RawBody(s server.Server, m message.MessageMaker) htr.Handle {
 			return
 		}
 
-		if err := en.Encode(s.Serve(*msg)); err != nil {
+		bs, err := encode(s.Serve(msg))
+		if err != nil {
 			problem := fmt.Sprintf(
 				"failed to encode message: %s",
 				err,
 			)
 			http.Error(w, problem, http.StatusInternalServerError)
 			return
+		}
+
+		if _, err = w.Write(bs); err != nil {
+			problem := fmt.Sprintf(
+				"failed to write response: %s",
+				err,
+			)
+			http.Error(
+				w,
+				problem,
+				http.StatusInternalServerError,
+			)
 		}
 	}
 }

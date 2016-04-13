@@ -1,8 +1,6 @@
 package testing_test
 
 import (
-	"bytes"
-
 	"github.com/mindfork/mindfork/message"
 	"github.com/mindfork/mindfork/testing"
 
@@ -10,13 +8,9 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-var _ = message.Encoder(&testing.Encoder{})
+var _ = message.Encoder(testing.Encode)
 
 func (ts *TestingSuite) TestEncode(c *C) {
-	w := &bytes.Buffer{}
-	mm := &testing.MessageMaker{}
-	enc := mm.NewEncoder(w)
-
 	for i, test := range []struct {
 		should string
 		given  message.Message
@@ -25,10 +19,9 @@ func (ts *TestingSuite) TestEncode(c *C) {
 		c.Logf("test %d: should %s", i, test.should)
 		c.Logf("  given: %v", test.given)
 
-		w.Reset()
+		bs, err := testing.Encode(test.given)
+		c.Assert(err, jc.ErrorIsNil)
 
-		c.Assert(enc.Encode(test.given), jc.ErrorIsNil)
-
-		c.Check(w.String(), Matches, test.expect+"\n")
+		c.Check(string(bs), Matches, test.expect)
 	}
 }
