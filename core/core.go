@@ -2,7 +2,6 @@ package core
 
 import (
 	"errors"
-	"time"
 
 	"github.com/mindfork/mindfork/message"
 
@@ -33,15 +32,15 @@ func (c *Core) Serve(m message.Message) message.Message {
 }
 
 // Intend applies an Intention to a Core.
-func (c *Core) Intend(i coremsg.Intention) coremsg.Result {
-	return coremsg.Result{coremsg.Intention{Who: "", What: "", When: (*time.Time)(nil)}, coremsg.Error{nil}}
+func (c *Core) Intend(i coremsg.Intention) message.Message {
+	return i
 }
 
 // Source simply returns a path to the Mindfork source code.
 // TODO: Figure out a way to make this integrate with current running version.
-func Source() coremsg.Result {
-	return coremsg.Result{struct {
+func Source() message.Message {
+	return struct {
 		Source  string
 		License string
-	}{"github.com/mindfork/mindfork", "Affero GPL"}, coremsg.Error{nil}}
+	}{"github.com/mindfork/mindfork", "Affero GPL"}
 }

@@ -21,10 +21,9 @@ func (m *MessageSuite) TestDecode(c *C) {
 		expectErr string
 	}{{
 		should:    "fail to unmarshal broken JSON",
-		givenType: `\"`,
-		given:     sampleMessages("emptyMessage"),
-		expectErr: `invalid character '}' looking for beginning of ` +
-			`value`,
+		givenType: `intention`,
+		given:     `{`,
+		expectErr: `unexpected end of JSON input`,
 	}, {
 		should:    "fail to make unknown Message type",
 		givenType: "x",
@@ -46,19 +45,22 @@ func (m *MessageSuite) TestDecode(c *C) {
 	}, {
 		should:    "make a valid Source",
 		givenType: string(coremsg.TSource),
-		given:     `{}`,
 		expect:    mfm.Message(coremsg.Source{}),
 	}, {
 		should:    "make a valid Echo",
 		givenType: string(coremsg.TEcho),
-		given:     `{}`,
 		expect:    mfm.Message(coremsg.Echo{}),
 	}} {
 		c.Logf("test %d: should %s", i, t.should)
-		bs := []byte(fmt.Sprintf(
-			`{%q:%q,%q:%s}`,
-			"Type", t.givenType, "RawMessage", t.given,
-		))
+		var bs []byte
+		if t.given == "" {
+			bs = []byte(fmt.Sprintf(`{"Type":%q}`, t.givenType))
+		} else {
+			bs = []byte(fmt.Sprintf(
+				`{"Type":%q,"RawMessage":%s}`,
+				t.givenType, t.given,
+			))
+		}
 
 		m, err := coremsg.Decode(bs)
 		if t.expectErr != "" {

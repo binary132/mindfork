@@ -10,8 +10,3 @@ const (
 
 type Echo struct{}
 type Source struct{}
-
-type Result struct {
-	mfm.Message
-	Error
-}

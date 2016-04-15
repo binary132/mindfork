@@ -27,9 +27,9 @@ func Decode(m []byte) (mfm.Message, error) {
 		}
 		return *msg, nil
 	case TSource:
-		return *new(Source), nil
+		return Source{}, nil
 	case TEcho:
-		return *new(Echo), nil
+		return Echo{}, nil
 	case "":
 		return nil, errors.New("no message Type received")
 	default:

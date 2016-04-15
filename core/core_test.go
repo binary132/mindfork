@@ -41,14 +41,14 @@ func (cs *CoreSuite) TestServe(c *C) {
 	}, {
 		should: "return source for a Source",
 		given:  coremsg.Source(struct{}{}),
-		expect: coremsg.Result{struct {
+		expect: struct {
 			Source  string
 			License string
-		}{"github.com/mindfork/mindfork", "Affero GPL"}, coremsg.Error{nil}},
+		}{"github.com/mindfork/mindfork", "Affero GPL"},
 	}, {
 		should: "Intend for an Intention",
 		given:  coremsg.Intention{},
-		expect: coremsg.Result{coremsg.Intention{}, coremsg.Error{nil}},
+		expect: coremsg.Intention{},
 	}, {
 		should: "return error for unknown type",
 		given:  message.Message(5),
