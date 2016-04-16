@@ -8,7 +8,10 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/mindfork/mindfork/core"
+	coremsg "github.com/mindfork/mindfork/core/message"
 	"github.com/mindfork/mindfork/message"
+	"github.com/mindfork/mindfork/server"
 	mfh "github.com/mindfork/mindfork/server/http"
 	st "github.com/mindfork/mindfork/server/testing"
 	mft "github.com/mindfork/mindfork/testing"
@@ -25,13 +28,15 @@ type HTTPSuite struct{}
 
 var _ = Suite(&HTTPSuite{})
 
-func (h *HTTPSuite) TestServe(c *C) {
-	srv := &st.Server{}
-	htr := httprouter.New()
-	mfh.Serve(srv, &mft.MessageMaker{})(htr, "/")
+var cores = map[string]server.Server{
+	"testing": &st.Server{},
+}
 
+func (h *HTTPSuite) TestServe(c *C) {
 	for i, test := range []struct {
 		should         string
+		server         server.Server
+		maker          message.Maker
 		path           string
 		arg            string
 		expectBody     string
@@ -39,6 +44,8 @@ func (h *HTTPSuite) TestServe(c *C) {
 		expectCode     int
 	}{{
 		should: "fail on a broken message",
+		server: cores["testing"],
+		maker:  &mft.MessageMaker{},
 		path:   "",
 		arg:    `{"Type":foo"}`,
 		expectBody: `failed to decode message: invalid character 'o'` +
@@ -47,6 +54,8 @@ func (h *HTTPSuite) TestServe(c *C) {
 		expectCode:     500,
 	}, {
 		should:         "echo a message",
+		server:         cores["testing"],
+		maker:          &mft.MessageMaker{},
 		path:           "",
 		arg:            `{"Type":"test","RawMessage":{"X":5}}`,
 		expectBody:     `{"X":5}`,
@@ -54,6 +63,8 @@ func (h *HTTPSuite) TestServe(c *C) {
 		expectCode:     200,
 	}, {
 		should:     "echo another message",
+		server:     cores["testing"],
+		maker:      &mft.MessageMaker{},
 		path:       "",
 		arg:        `{"Type":"test","RawMessage":{"X":6}}`,
 		expectBody: `{"X":6}`,
@@ -61,9 +72,20 @@ func (h *HTTPSuite) TestServe(c *C) {
 			mft.Message{X: 5}, mft.Message{X: 6},
 		},
 		expectCode: 200,
+	}, {
+		should:     "echo a message via core.Core",
+		server:     &core.Core{},
+		maker:      &coremsg.Maker{},
+		path:       "",
+		arg:        `{"Type":"echo"}`,
+		expectBody: `{}`,
+		expectCode: 200,
 	}} {
 		c.Logf("test %d: should %s", i, test.should)
 		c.Logf("  arg: %s", test.arg)
+
+		htr := httprouter.New()
+		mfh.Serve(test.server, test.maker)(htr, "/")
 
 		w := httptest.NewRecorder()
 		query := fmt.Sprintf("http://example.com/%s",
@@ -81,7 +103,10 @@ func (h *HTTPSuite) TestServe(c *C) {
 
 		htr.ServeHTTP(w, req)
 		c.Check(w.Body.String(), Equals, test.expectBody)
-		c.Check(srv.Messages, jc.DeepEquals, test.expectMessages)
+		if testServer, ok := test.server.(*st.Server); ok {
+			c.Check(testServer.Messages, jc.DeepEquals, test.expectMessages)
+		}
+
 		c.Check(w.Code, Equals, test.expectCode)
 	}
 }
