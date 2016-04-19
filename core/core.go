@@ -2,14 +2,29 @@ package core
 
 import (
 	"errors"
+	"time"
 
 	"github.com/mindfork/mindfork/message"
 
 	coremsg "github.com/mindfork/mindfork/core/message"
 )
 
+// Timer is an interface for Time that can be mocked.
+type Timer interface {
+	Now() time.Time
+}
+
 // Core is a base implementation of Server and Mutator.
 type Core struct {
+	Timer
+}
+
+// Now implements Timer.Now for Core.
+func (c *Core) Now() time.Time {
+	if c.Timer == nil {
+		return time.Now()
+	}
+	return c.Timer.Now()
 }
 
 // Serve implements server.Server by handling echo and health checks, then hands
@@ -21,11 +36,12 @@ func (c *Core) Serve(m message.Message) message.Message {
 
 	switch tM := m.(type) {
 	case coremsg.Echo:
-		return m
+		return coremsg.Echo{When: c.Now()}
 	case coremsg.Source:
 		return Source()
 	case coremsg.Intention:
 		return c.Intend(tM)
+	// TODO(binary132): case coremsg.Require:
 	default:
 		return coremsg.Error{Err: errors.New("unknown Message type")}
 	}

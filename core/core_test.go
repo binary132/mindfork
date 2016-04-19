@@ -3,6 +3,7 @@ package core_test
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/mindfork/mindfork/core"
 	coremsg "github.com/mindfork/mindfork/core/message"
@@ -19,8 +20,13 @@ type CoreSuite struct{}
 
 var _ = Suite(&CoreSuite{})
 
+type testTimer time.Time
+
+func (t testTimer) Now() time.Time { return time.Time(t) }
+
 func (cs *CoreSuite) TestServe(c *C) {
-	mfCore := new(core.Core)
+	tNow := time.Now()
+	mfCore := &core.Core{Timer: testTimer(tNow)}
 
 	for i, t := range []struct {
 		should string
@@ -36,8 +42,8 @@ func (cs *CoreSuite) TestServe(c *C) {
 		expect: message.Error{Err: errors.New("nil Message")},
 	}, {
 		should: "echo for an Echo",
-		given:  coremsg.Echo(struct{}{}),
-		expect: message.Message(coremsg.Echo(struct{}{})),
+		given:  coremsg.Echo{},
+		expect: coremsg.Echo{When: tNow},
 	}, {
 		should: "return source for a Source",
 		given:  coremsg.Source(struct{}{}),
@@ -55,6 +61,7 @@ func (cs *CoreSuite) TestServe(c *C) {
 		expect: coremsg.Error{Err: errors.New("unknown Message type")},
 	}} {
 		c.Logf("test %d: %s", i, t.should)
+
 		c.Check(mfCore.Serve(t.given), jc.DeepEquals, t.expect)
 	}
 }
