@@ -7,6 +7,7 @@ import (
 
 	"github.com/mindfork/mindfork/core"
 	coremsg "github.com/mindfork/mindfork/core/message"
+	coretest "github.com/mindfork/mindfork/core/testing"
 	"github.com/mindfork/mindfork/message"
 
 	jc "github.com/juju/testing/checkers"
@@ -20,13 +21,9 @@ type CoreSuite struct{}
 
 var _ = Suite(&CoreSuite{})
 
-type testTimer time.Time
-
-func (t testTimer) Now() time.Time { return time.Time(t) }
-
 func (cs *CoreSuite) TestServe(c *C) {
 	tNow := time.Now()
-	mfCore := &core.Core{Timer: testTimer(tNow)}
+	mfCore := &core.Core{Timer: coretest.TestTimer(tNow)}
 
 	for i, t := range []struct {
 		should string
