@@ -2,6 +2,7 @@ package message_test
 
 import (
 	"fmt"
+	"time"
 
 	coremsg "github.com/mindfork/mindfork/core/message"
 	mfm "github.com/mindfork/mindfork/message"
@@ -13,6 +14,9 @@ import (
 var _ = mfm.Decoder(coremsg.Decode)
 
 func (m *MessageSuite) TestDecode(c *C) {
+	tExpect, err := time.Parse(time.RFC3339, "2009-11-10T23:00:00Z")
+	c.Assert(err, jc.ErrorIsNil)
+
 	for i, t := range []struct {
 		should    string
 		given     string
@@ -38,18 +42,28 @@ func (m *MessageSuite) TestDecode(c *C) {
 		should:    "make a valid Intention",
 		givenType: string(coremsg.TIntention),
 		given:     sampleMessages("validIntention"),
-		expect: mfm.Message(coremsg.Intention{
+		expect: coremsg.Intention{
 			Who:  "Bodie",
 			What: "To seek the Holy Grail",
-		}),
+		},
+	}, {
+		should:    "make a valid Intention",
+		givenType: string(coremsg.TIntention),
+		given:     sampleMessages("timedIntention"),
+		expect: coremsg.Intention{
+			Who:  "Bodie",
+			What: "Something neat",
+			When: &tExpect,
+		},
 	}, {
 		should:    "make a valid Source",
 		givenType: string(coremsg.TSource),
-		expect:    mfm.Message(coremsg.Source{}),
+		given:     sampleMessages("validIntention"),
+		expect:    coremsg.Source{},
 	}, {
 		should:    "make a valid Echo",
 		givenType: string(coremsg.TEcho),
-		expect:    mfm.Message(coremsg.Echo{}),
+		expect:    coremsg.Echo{},
 	}} {
 		c.Logf("test %d: should %s", i, t.should)
 		var bs []byte
