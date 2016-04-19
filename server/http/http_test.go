@@ -2,14 +2,17 @@ package http_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/mindfork/mindfork/core"
 	coremsg "github.com/mindfork/mindfork/core/message"
+	coretest "github.com/mindfork/mindfork/core/testing"
 	"github.com/mindfork/mindfork/message"
 	"github.com/mindfork/mindfork/server"
 	mfh "github.com/mindfork/mindfork/server/http"
@@ -33,6 +36,9 @@ var cores = map[string]server.Server{
 }
 
 func (h *HTTPSuite) TestServe(c *C) {
+	tNow := time.Now()
+	tNowJson, _ := json.Marshal(tNow)
+
 	for i, test := range []struct {
 		should         string
 		server         server.Server
@@ -74,11 +80,11 @@ func (h *HTTPSuite) TestServe(c *C) {
 		expectCode: 200,
 	}, {
 		should:     "echo a message via core.Core",
-		server:     &core.Core{},
+		server:     &core.Core{Timer: coretest.TestTimer(tNow)},
 		maker:      &coremsg.Maker{},
 		path:       "",
 		arg:        `{"Type":"echo"}`,
-		expectBody: `{}`,
+		expectBody: fmt.Sprintf(`{"When":%s}`, tNowJson),
 		expectCode: 200,
 	}} {
 		c.Logf("test %d: should %s", i, test.should)
