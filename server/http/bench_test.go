@@ -36,12 +36,32 @@ func (h *HTTPSuite) BenchmarkTesting(c *C) {
 	}
 }
 
-func (h *HTTPSuite) BenchmarkCore(c *C) {
+func (h *HTTPSuite) BenchmarkCoreIntention(c *C) {
 	htr := httprouter.New()
 	mfh.Serve(&core.Core{}, &message.Maker{})(htr, "/")
 
 	c.Logf("http echo benchmark: ")
 	br := bytes.NewReader([]byte(`{"Type":"intention","RawMessage":{"Who":"User","What":"Run a test"}}`))
+
+	req, err := http.NewRequest(
+		"POST",
+		"http://example.com/",
+		br,
+	)
+	c.Assert(err, jc.ErrorIsNil)
+
+	for i := 0; i < c.N; i++ {
+		w := httptest.NewRecorder()
+		htr.ServeHTTP(w, req)
+	}
+}
+
+func (h *HTTPSuite) BenchmarkCoreEcho(c *C) {
+	htr := httprouter.New()
+	mfh.Serve(&core.Core{}, &message.Maker{})(htr, "/")
+
+	c.Logf("http echo benchmark: ")
+	br := bytes.NewReader([]byte(`{"Type":"echo"}`))
 
 	req, err := http.NewRequest(
 		"POST",
