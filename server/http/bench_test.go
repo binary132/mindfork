@@ -41,7 +41,9 @@ func (h *HTTPSuite) BenchmarkCoreIntention(c *C) {
 	mfh.Serve(&core.Core{}, &message.Maker{})(htr, "/")
 
 	c.Logf("http echo benchmark: ")
-	br := bytes.NewReader([]byte(`{"Type":"intention","RawMessage":{"Who":"User","What":"Run a test"}}`))
+	br := bytes.NewReader([]byte(`{"Type":"intention","RawMessage":` +
+		`{"Who":"User","What":"Run a test"}}`,
+	))
 
 	req, err := http.NewRequest(
 		"POST",
