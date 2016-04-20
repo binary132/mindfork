@@ -23,7 +23,10 @@ var _ = Suite(&CoreSuite{})
 
 func (cs *CoreSuite) TestServe(c *C) {
 	tNow := time.Now()
-	mfCore := &core.Core{Timer: coretest.TestTimer(tNow)}
+	mfCore := &core.Core{
+		Timer:     coretest.TestTimer(tNow),
+		Scheduler: &coretest.MockScheduler{},
+	}
 
 	for i, t := range []struct {
 		should string
@@ -51,7 +54,7 @@ func (cs *CoreSuite) TestServe(c *C) {
 	}, {
 		should: "Intend for an Intention",
 		given:  coremsg.Intention{},
-		expect: coremsg.Intention{},
+		expect: coremsg.Intention{ID: 0},
 	}, {
 		should: "return error for unknown type",
 		given:  message.Message(5),

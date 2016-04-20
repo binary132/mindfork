@@ -4,9 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/mindfork/mindfork/message"
-
-	coremsg "github.com/mindfork/mindfork/core/message"
+	"github.com/mindfork/mindfork/core/message"
+	mfm "github.com/mindfork/mindfork/message"
 )
 
 // Timer is an interface for Time that can be mocked.
@@ -14,9 +13,10 @@ type Timer interface {
 	Now() time.Time
 }
 
-// Core is a base implementation of Server and Mutator.
+// Core is a base implementation of Server.
 type Core struct {
 	Timer
+	Scheduler
 }
 
 // Now implements Timer.Now for Core.
@@ -29,32 +29,31 @@ func (c *Core) Now() time.Time {
 
 // Serve implements server.Server by handling echo and health checks, then hands
 // off control to the Message implementation if it's a Transformer.
-func (c *Core) Serve(m message.Message) message.Message {
-	if m == message.Message(nil) || m == nil {
-		return message.MakeError(errors.New("nil Message"))
+func (c *Core) Serve(m mfm.Message) mfm.Message {
+	if m == mfm.Message(nil) || m == nil {
+		return mfm.MakeError(errors.New("nil Message"))
 	}
 
 	switch tM := m.(type) {
-	case coremsg.Echo:
-		return coremsg.Echo{When: c.Now()}
-	case coremsg.Source:
+	case message.Echo:
+		return message.Echo{When: c.Now()}
+	case message.Source:
 		return Source()
-	case coremsg.Intention:
+	case message.Intention:
 		return c.Intend(tM)
-	// TODO(binary132): case coremsg.Require:
 	default:
-		return coremsg.Error{Err: errors.New("unknown Message type")}
+		return message.Error{Err: errors.New("unknown Message type")}
 	}
 }
 
 // Intend applies an Intention to a Core.
-func (c *Core) Intend(i coremsg.Intention) message.Message {
-	return i
+func (c *Core) Intend(i message.Intention) mfm.Message {
+	return c.Scheduler.Add(i)
 }
 
 // Source simply returns a path to the Mindfork source code.
 // TODO: Figure out a way to make this integrate with current running version.
-func Source() message.Message {
+func Source() mfm.Message {
 	return struct {
 		Source  string
 		License string

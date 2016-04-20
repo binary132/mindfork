@@ -7,6 +7,7 @@ import (
 
 // Intention is the necessary information to make a Mindfork intention.
 type Intention struct {
+	ID   int64 `json:",omitempty"`
 	Who  string
 	What string
 	When *time.Time `json:",omitempty"`
