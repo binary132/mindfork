@@ -21,7 +21,7 @@ func main() {
 	// Run the Core as a mindfork.Server using the httprouter.Router.
 	err := http.ListenAndServe(
 		path,
-		mfh.Serve(&core.Core{}, &coremsg.Maker{})(httpMux, "/"),
+		mfh.Serve(&core.Core{Scheduler: &core.Kernel{}}, &coremsg.Maker{})(httpMux, "/"),
 	)
 	if err != nil {
 		log.Panic(err)

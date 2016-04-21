@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	coremsg "github.com/mindfork/mindfork/core/message"
+	message "github.com/mindfork/mindfork/core/message"
+	"github.com/mindfork/mindfork/core/testing"
 	mfm "github.com/mindfork/mindfork/message"
 
 	jc "github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
 )
 
-var _ = mfm.Decoder(coremsg.Decode)
+var _ = mfm.Decoder(message.Decode)
 
 func (m *MessageSuite) TestDecode(c *C) {
 	tExpect, err := time.Parse(time.RFC3339, "2009-11-10T23:00:00Z")
@@ -31,39 +32,39 @@ func (m *MessageSuite) TestDecode(c *C) {
 	}, {
 		should:    "fail to make unknown Message type",
 		givenType: "x",
-		given:     sampleMessages("emptyObject"),
+		given:     testing.SampleMessages("emptyObject"),
 		expectErr: `unknown Type "x"`,
 	}, {
 		should:    "fail to make invalid Intention",
-		givenType: string(coremsg.TIntention),
-		given:     sampleMessages("emptyObject"),
+		givenType: string(message.TIntention),
+		given:     testing.SampleMessages("emptyObject"),
 		expectErr: `Intention needs a Who`,
 	}, {
 		should:    "make a valid Intention",
-		givenType: string(coremsg.TIntention),
-		given:     sampleMessages("validIntention"),
-		expect: coremsg.Intention{
+		givenType: string(message.TIntention),
+		given:     testing.SampleMessages("validIntention"),
+		expect: message.Intention{
 			Who:  "Bodie",
 			What: "To seek the Holy Grail",
 		},
 	}, {
 		should:    "make a valid Intention",
-		givenType: string(coremsg.TIntention),
-		given:     sampleMessages("timedIntention"),
-		expect: coremsg.Intention{
+		givenType: string(message.TIntention),
+		given:     testing.SampleMessages("timedIntention"),
+		expect: message.Intention{
 			Who:  "Bodie",
 			What: "Something neat",
 			When: &tExpect,
 		},
 	}, {
 		should:    "make a valid Source",
-		givenType: string(coremsg.TSource),
-		given:     sampleMessages("validIntention"),
-		expect:    coremsg.Source{},
+		givenType: string(message.TSource),
+		given:     testing.SampleMessages("validIntention"),
+		expect:    message.Source{},
 	}, {
 		should:    "make a valid Echo",
-		givenType: string(coremsg.TEcho),
-		expect:    coremsg.Echo{},
+		givenType: string(message.TEcho),
+		expect:    message.Echo{},
 	}} {
 		c.Logf("test %d: should %s", i, t.should)
 		var bs []byte
@@ -76,7 +77,7 @@ func (m *MessageSuite) TestDecode(c *C) {
 			))
 		}
 
-		m, err := coremsg.Decode(bs)
+		m, err := message.Decode(bs)
 		if t.expectErr != "" {
 			c.Check(err, ErrorMatches, t.expectErr)
 			continue

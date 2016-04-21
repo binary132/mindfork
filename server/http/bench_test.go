@@ -2,13 +2,17 @@ package http_test
 
 import (
 	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 
 	"github.com/mindfork/mindfork/core"
 	"github.com/mindfork/mindfork/core/message"
+	coretest "github.com/mindfork/mindfork/core/testing"
+	mfm "github.com/mindfork/mindfork/message"
+	"github.com/mindfork/mindfork/server"
 	mfh "github.com/mindfork/mindfork/server/http"
-	st "github.com/mindfork/mindfork/server/testing"
+	"github.com/mindfork/mindfork/server/testing"
 	mft "github.com/mindfork/mindfork/testing"
 
 	jc "github.com/juju/testing/checkers"
@@ -16,64 +20,52 @@ import (
 	. "gopkg.in/check.v1"
 )
 
-func (h *HTTPSuite) BenchmarkTesting(c *C) {
+func benchHTTPServer(c *C, sv server.Server, m mfm.Maker, bs []byte) {
 	htr := httprouter.New()
-	mfh.Serve(&st.Server{}, &mft.MessageMaker{})(htr, "/")
 
-	c.Logf("http echo benchmark: ")
-	br := bytes.NewReader([]byte(`{"Type":"test","RawMessage":{"X":5}}`))
+	mfh.Serve(sv, m)(htr, "/")
 
 	req, err := http.NewRequest(
 		"POST",
 		"http://example.com/",
-		br,
+		bytes.NewReader(bs),
 	)
 	c.Assert(err, jc.ErrorIsNil)
 
 	for i := 0; i < c.N; i++ {
+		req.Body = ioutil.NopCloser(bytes.NewReader(bs))
+
 		w := httptest.NewRecorder()
 		htr.ServeHTTP(w, req)
+
+		c.Assert(w.Code, Equals, 200)
 	}
+}
+
+func (h *HTTPSuite) BenchmarkTesting(c *C) {
+	benchHTTPServer(
+		c,
+		&testing.Server{},
+		&mft.MessageMaker{},
+		[]byte(`{"Type":"test","RawMessage":{"X":5}}`),
+	)
 }
 
 func (h *HTTPSuite) BenchmarkCoreIntention(c *C) {
-	htr := httprouter.New()
-	mfh.Serve(&core.Core{}, &message.Maker{})(htr, "/")
-
-	c.Logf("http echo benchmark: ")
-	br := bytes.NewReader([]byte(`{"Type":"intention","RawMessage":` +
-		`{"Who":"User","What":"Run a test"}}`,
-	))
-
-	req, err := http.NewRequest(
-		"POST",
-		"http://example.com/",
-		br,
+	benchHTTPServer(
+		c,
+		&core.Core{Scheduler: &core.Kernel{}},
+		&message.Maker{},
+		[]byte(`{"Type":"intention","RawMessage":`+
+			coretest.SampleMessages("validIntention")+`}`),
 	)
-	c.Assert(err, jc.ErrorIsNil)
-
-	for i := 0; i < c.N; i++ {
-		w := httptest.NewRecorder()
-		htr.ServeHTTP(w, req)
-	}
 }
 
 func (h *HTTPSuite) BenchmarkCoreEcho(c *C) {
-	htr := httprouter.New()
-	mfh.Serve(&core.Core{}, &message.Maker{})(htr, "/")
-
-	c.Logf("http echo benchmark: ")
-	br := bytes.NewReader([]byte(`{"Type":"echo"}`))
-
-	req, err := http.NewRequest(
-		"POST",
-		"http://example.com/",
-		br,
+	benchHTTPServer(
+		c,
+		&core.Core{Scheduler: &core.Kernel{}},
+		&message.Maker{},
+		[]byte(`{"Type":"echo"}`),
 	)
-	c.Assert(err, jc.ErrorIsNil)
-
-	for i := 0; i < c.N; i++ {
-		w := httptest.NewRecorder()
-		htr.ServeHTTP(w, req)
-	}
 }
