@@ -23,3 +23,13 @@ func (m *MockScheduler) Add(i message.Intention) mfm.Message {
 
 	return i
 }
+
+// Peek returns a slice of Intentions which have no dependencies.
+func (m *MockScheduler) Peek() []message.Intention {
+	return m.Intentions
+}
+
+// Export returns all Intentions known to the Scheduler.
+func (m *MockScheduler) Export() []message.Intention {
+	return m.Intentions
+}

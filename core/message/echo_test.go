@@ -1,8 +1,8 @@
 package message_test
 
 import (
-	coremsg "github.com/mindfork/mindfork/core/message"
-	"github.com/mindfork/mindfork/message"
+	"github.com/mindfork/mindfork/core/message"
+	mfm "github.com/mindfork/mindfork/message"
 )
 
-var _ = message.Message(new(coremsg.Echo))
+var _ = mfm.Message(message.Echo{})

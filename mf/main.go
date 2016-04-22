@@ -14,14 +14,24 @@ import (
 func main() {
 	httpMux := htr.New()
 
+	server := &core.Core{Scheduler: core.NewKernel()}
+
 	path := "localhost:25000"
 
 	log.Printf("Mindfork listening on %v", path)
 
+	// httpMux.GET("/dump", func(w http.ResponseWriter, r *http.Request, ps htr.Params) {
+	// 	bs, err := json.MarshalIndent(server.Export(), "", "\t")
+	// 	if err != nil {
+	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	}
+	// 	w.Write(bs)
+	// })
+
 	// Run the Core as a mindfork.Server using the httprouter.Router.
 	err := http.ListenAndServe(
 		path,
-		mfh.Serve(&core.Core{Scheduler: &core.Kernel{}}, &coremsg.Maker{})(httpMux, "/"),
+		mfh.Serve(server, &coremsg.Maker{})(httpMux, "/"),
 	)
 	if err != nil {
 		log.Panic(err)

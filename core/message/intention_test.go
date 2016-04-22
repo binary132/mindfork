@@ -1,7 +1,8 @@
 package message_test
 
-import . "gopkg.in/check.v1"
+import (
+	"github.com/mindfork/mindfork/core/message"
+	mfm "github.com/mindfork/mindfork/message"
+)
 
-func (m *MessageSuite) TestMakeIntention(c *C) {
-
-}
+var _ = mfm.Message(message.Intention{})

@@ -40,15 +40,10 @@ func (c *Core) Serve(m mfm.Message) mfm.Message {
 	case message.Source:
 		return Source()
 	case message.Intention:
-		return c.Intend(tM)
+		return c.Add(tM)
 	default:
 		return message.Error{Err: errors.New("unknown Message type")}
 	}
-}
-
-// Intend applies an Intention to a Core.
-func (c *Core) Intend(i message.Intention) mfm.Message {
-	return c.Scheduler.Add(i)
 }
 
 // Source simply returns a path to the Mindfork source code.

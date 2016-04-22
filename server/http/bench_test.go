@@ -54,7 +54,7 @@ func (h *HTTPSuite) BenchmarkTesting(c *C) {
 func (h *HTTPSuite) BenchmarkCoreIntention(c *C) {
 	benchHTTPServer(
 		c,
-		&core.Core{Scheduler: &core.Kernel{}},
+		&core.Core{Scheduler: core.NewKernel()},
 		&message.Maker{},
 		[]byte(`{"Type":"intention","RawMessage":`+
 			coretest.SampleMessages("validIntention")+`}`),
@@ -64,7 +64,7 @@ func (h *HTTPSuite) BenchmarkCoreIntention(c *C) {
 func (h *HTTPSuite) BenchmarkCoreEcho(c *C) {
 	benchHTTPServer(
 		c,
-		&core.Core{Scheduler: &core.Kernel{}},
+		&core.Core{Scheduler: core.NewKernel()},
 		&message.Maker{},
 		[]byte(`{"Type":"echo"}`),
 	)
