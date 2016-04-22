@@ -11,6 +11,7 @@ type Intention struct {
 	Who  string
 	What string
 	When *time.Time `json:",omitempty"`
+	Deps []int64    `json:",omitempty"`
 }
 
 // Validate validates an Intention.
