@@ -11,8 +11,8 @@ type Scheduler interface {
 	// Intention with an ID populated.
 	Add(message.Intention) mfm.Message
 
-	// Peek returns a slice of Intentions which have no dependencies.
-	Peek() []message.Intention
+	// Available returns a slice of Intentions which have no dependencies.
+	Available() []message.Intention
 
 	// Export returns all Intentions known to the Scheduler.
 	Export() []message.Intention

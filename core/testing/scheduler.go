@@ -18,18 +18,18 @@ func (m *MockScheduler) Add(i message.Intention) mfm.Message {
 	m.Lock()
 	defer m.Unlock()
 
+	i.ID = int64(len(m.Intentions))
 	m.Intentions = append(m.Intentions, i)
-	i.ID = int64(len(m.Intentions) - 1)
 
 	return i
 }
 
-// Peek returns a slice of Intentions which have no dependencies.
-func (m *MockScheduler) Peek() []message.Intention {
+// Available implements core.Scheduler on MockScheduler.
+func (m *MockScheduler) Available() []message.Intention {
 	return m.Intentions
 }
 
-// Export returns all Intentions known to the Scheduler.
+// Export implements core.Scheduler on MockScheduler.
 func (m *MockScheduler) Export() []message.Intention {
 	return m.Intentions
 }

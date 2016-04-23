@@ -1,4 +1,4 @@
-package core
+package scheduler
 
 import (
 	"fmt"
@@ -7,7 +7,9 @@ import (
 	"github.com/mindfork/mindfork/core/message"
 	mfm "github.com/mindfork/mindfork/message"
 
+	"github.com/gonum/graph"
 	"github.com/gonum/graph/simple"
+	"github.com/gonum/graph/traverse"
 )
 
 // Kernel is the core Scheduler implementation.  It uses github.com/gonum/graph
@@ -38,25 +40,49 @@ func (k *Kernel) Add(i message.Intention) mfm.Message {
 	defer k.Unlock()
 
 	ints := k.intentions
+	depNodes := make([]Intention, len(i.Deps))
 
-	i.ID = int64(ints.NewNodeID())
-	node := Intention{i}
-
-	ints.AddNode(node)
-	for _, dep := range i.Deps {
-		if to := ints.Node(int(dep)); to != nil {
-			ints.SetEdge(simple.Edge{F: node, T: to, W: 1})
+	for index, dep := range i.Deps {
+		if dep == i.ID {
+			return message.Error{Err: fmt.Errorf("cannot depend on self")}
+		} else if to := ints.Node(int(dep)); to != nil {
+			depNodes[index] = to.(Intention)
 		} else {
 			return message.Error{Err: fmt.Errorf("no such intention %d", dep)}
 		}
 	}
 
+	i.ID = int64(ints.NewNodeID())
+	node := Intention{i}
+
+	ints.AddNode(node)
+	for _, dep := range depNodes {
+		ints.SetEdge(simple.Edge{F: node, T: dep, W: 0})
+	}
+
 	return i
 }
 
-// Peek implements Scheduler.Peek on Kernel.
-func (k *Kernel) Peek() []message.Intention {
-	return nil
+// Available implements Scheduler.Available on Kernel.
+func (k *Kernel) Available() []message.Intention {
+	k.RLock()
+	defer k.RUnlock()
+
+	ints := k.intentions
+
+	var result []message.Intention
+
+	w := traverse.BreadthFirst{EdgeFilter: func(e graph.Edge) bool {
+		return len(e.To().(Intention).Deps) > 0 &&
+			len(e.From().(Intention).Deps) > 0
+	}}
+
+	w.WalkAll(graph.Undirect{G: ints}, nil, nil, func(n graph.Node) {
+		i := n.(Intention)
+		result = append(result, i.Intention)
+	})
+
+	return result
 }
 
 // Export implements Scheduler.Export on Kernel.

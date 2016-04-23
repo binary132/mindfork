@@ -1,17 +1,17 @@
-package core_test
+package scheduler_test
 
 import (
 	"reflect"
 
-	"github.com/mindfork/mindfork/core"
 	"github.com/mindfork/mindfork/core/message"
+	"github.com/mindfork/mindfork/core/scheduler"
 	mfm "github.com/mindfork/mindfork/message"
 
 	jc "github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
 )
 
-func (cs *CoreSuite) TestKernelAdd(c *C) {
+func (cs *SchedulerSuite) TestKernelAdd(c *C) {
 	for i, test := range []struct {
 		given         []message.Intention
 		expectResults []mfm.Message
@@ -27,7 +27,7 @@ func (cs *CoreSuite) TestKernelAdd(c *C) {
 	}} {
 		c.Logf("test %d: should", i)
 
-		k := core.NewKernel()
+		k := scheduler.NewKernel()
 
 		results := make([]mfm.Message, len(test.given))
 
