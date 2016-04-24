@@ -1,8 +1,9 @@
 package scheduler_test
 
 import (
-	"reflect"
+	"errors"
 
+	"github.com/mindfork/mindfork/core"
 	"github.com/mindfork/mindfork/core/message"
 	"github.com/mindfork/mindfork/core/scheduler"
 	mfm "github.com/mindfork/mindfork/message"
@@ -11,36 +12,237 @@ import (
 	. "gopkg.in/check.v1"
 )
 
+var _ = core.Scheduler(&scheduler.Kernel{})
+
+//TODO: test Roots
+//TODO: test Free
+
 func (cs *SchedulerSuite) TestKernelAdd(c *C) {
 	for i, test := range []struct {
-		given         []message.Intention
-		expectResults []mfm.Message
-		expectKern    []message.Intention
+		should string
+		given  []message.Intention
+		expect []mfm.Message
 	}{{
-		given: []message.Intention{{}, {}, {}},
-		expectResults: []mfm.Message{
-			message.Intention{},
+		should: "fail to Add an Intention whose ID does not exist",
+		given:  []message.Intention{{ID: 1}},
+		expect: []mfm.Message{message.Error{
+			Err: errors.New("no such Intention 1"),
+		}},
+	}, {
+		should: "fail to Add an Intention with invalid Deps",
+		given:  []message.Intention{{Deps: []int64{1}}},
+		expect: []mfm.Message{message.Error{
+			Err: errors.New("no such Intention 1"),
+		}},
+	}, {
+		should: "Add a single new Intention",
+		given:  []message.Intention{{}},
+		expect: []mfm.Message{message.Intention{ID: 1}},
+	}, {
+		should: "Add a few new Intentions",
+		given:  []message.Intention{{}, {}, {}},
+		expect: []mfm.Message{
+			message.Intention{ID: 1},
+			message.Intention{ID: 2},
+			message.Intention{ID: 3},
+		},
+	}, {
+		should: "fail to Add an Intention with some invalid Deps",
+		given: []message.Intention{
+			{},
+			{Deps: []int64{1}},
+			{Deps: []int64{2}},
+			{Deps: []int64{3, 5}},
+			{Deps: []int64{2, 3}},
+		},
+		expect: []mfm.Message{
+			message.Intention{ID: 1},
+			message.Intention{ID: 2, Deps: []int64{1}},
+			message.Intention{ID: 3, Deps: []int64{2}},
+			message.Error{Err: errors.New("no such Intention 5")},
+			message.Intention{ID: 4, Deps: []int64{2, 3}},
+		},
+	}, {
+		should: "fail to Add an Intention with a dep cycle",
+		given: []message.Intention{
+			{},
+			{Deps: []int64{1}},
+			{Deps: []int64{2}},
+			{ID: 1, Deps: []int64{3}},
+		},
+		expect: []mfm.Message{
+			message.Intention{ID: 1},
+			message.Intention{ID: 2, Deps: []int64{1}},
+			message.Intention{ID: 3, Deps: []int64{2}},
+			message.Error{Err: errors.New("cycle requested: [2 1]")},
+		},
+	}} {
+		c.Logf("test %d: should %s\n  given: %v\n  expect: %v",
+			i, test.should, test.given, test.expect,
+		)
+
+		k := &scheduler.Kernel{
+			Intentions: make(map[int64]message.Intention),
+			Roots:      make(map[int64]message.Intention),
+			Free:       make(map[int64]message.Intention),
+		}
+
+		result := make([]mfm.Message, len(test.given))
+
+		for i, in := range test.given {
+			result[i] = k.Add(in)
+		}
+
+		c.Check(result, jc.DeepEquals, test.expect)
+	}
+}
+
+func (s *SchedulerSuite) TestKernelAvailable(c *C) {
+	for i, test := range []struct {
+		should string
+		given  []message.Intention
+		expect []message.Intention
+	}{{
+		should: "show a few free Intentions",
+		given:  []message.Intention{{}, {}, {}},
+		expect: []message.Intention{
+			message.Intention{ID: 1},
+			message.Intention{ID: 2},
+			message.Intention{ID: 3},
+		},
+	}, {
+		should: "not show non-free Intentions",
+		given:  []message.Intention{{}, {}, {Deps: []int64{1}}},
+		expect: []message.Intention{
 			message.Intention{ID: 1},
 			message.Intention{ID: 2},
 		},
-		expectKern: []message.Intention{{}, {ID: 1}, {ID: 2}},
+	}, {
+		should: "not show non-free Intentions after mutation",
+		given:  []message.Intention{{}, {}, {ID: 2, Deps: []int64{1}}},
+		expect: []message.Intention{
+			message.Intention{ID: 1},
+		},
+	}, {
+		should: "show re-freed Intentions after mutation",
+		given: []message.Intention{
+			{}, {},
+			{ID: 2, Deps: []int64{1}},
+			{ID: 2},
+		},
+		expect: []message.Intention{
+			message.Intention{ID: 1},
+			message.Intention{ID: 2},
+		},
 	}} {
-		c.Logf("test %d: should", i)
+		c.Logf("test %d: should %s", i, test.should)
 
-		k := scheduler.NewKernel()
-
-		results := make([]mfm.Message, len(test.given))
-
-		for i, in := range test.given {
-			results[i] = k.Add(in)
-			c.Check(
-				reflect.TypeOf(results[i]),
-				Equals,
-				reflect.TypeOf(mfm.Message(message.Intention{})),
-			)
+		k := &scheduler.Kernel{
+			Intentions: make(map[int64]message.Intention),
+			Roots:      make(map[int64]message.Intention),
+			Free:       make(map[int64]message.Intention),
 		}
 
-		c.Check(results, jc.DeepEquals, test.expectResults)
-		c.Check(k.Export(), jc.DeepEquals, test.expectKern)
+		for _, i := range test.given {
+			k.Add(i)
+		}
+
+		c.Check(k.Available(), jc.DeepEquals, test.expect)
+	}
+}
+
+func (s *SchedulerSuite) TestCheckCycle(c *C) {
+	type edge struct {
+		from int64
+		to   int64
+	}
+
+	for i, test := range []struct {
+		should    string
+		givenMap  map[int64]message.Intention
+		givenEdge edge
+		expect    []int64
+	}{{
+		should: "result in nil for no cycles",
+		givenMap: map[int64]message.Intention{
+			1: {ID: 1}, 2: {ID: 2},
+		},
+		givenEdge: edge{1, 2},
+	}, {
+		should: "result in nil for acyclical deps",
+		givenMap: map[int64]message.Intention{
+			1: {ID: 1, Deps: []int64{2}},
+			2: {ID: 2},
+			3: {ID: 3},
+		},
+		givenEdge: edge{1, 3},
+	}, {
+		should: "show cycle for simple reversed edge",
+		givenMap: map[int64]message.Intention{
+			1: {ID: 1, Deps: []int64{2}},
+			2: {ID: 2},
+		},
+		givenEdge: edge{2, 1},
+		expect:    []int64{1, 2},
+	}, {
+		should: "show cycle for triangular cycle",
+		givenMap: map[int64]message.Intention{
+			1: {ID: 1},
+			2: {ID: 2, Deps: []int64{1}},
+			3: {ID: 3, Deps: []int64{2}},
+		},
+		givenEdge: edge{1, 3},
+		expect:    []int64{2, 1},
+	}, {
+		should: "show cycle for rectangular cycle",
+		givenMap: map[int64]message.Intention{
+			1: {ID: 1},
+			2: {ID: 2, Deps: []int64{1}},
+			3: {ID: 3, Deps: []int64{2}},
+			4: {ID: 4, Deps: []int64{3}},
+		},
+		givenEdge: edge{1, 4},
+		expect:    []int64{2, 1},
+	}, {
+		should: "show cycle for diamond cycle",
+		givenMap: map[int64]message.Intention{
+			1: {ID: 1, Deps: []int64{2, 3}},
+			2: {ID: 2, Deps: []int64{4}},
+			3: {ID: 3, Deps: []int64{4}},
+			4: {ID: 4},
+		},
+		givenEdge: edge{4, 1},
+		expect:    []int64{2, 4},
+	}, {
+		should: "show cycle for more complicated cycle",
+		givenMap: map[int64]message.Intention{
+			1: {ID: 1, Deps: []int64{2, 3, 4}},
+			2: {ID: 2, Deps: []int64{4, 6}},
+			3: {ID: 3, Deps: []int64{4}},
+			4: {ID: 4, Deps: []int64{5}},
+			5: {ID: 5},
+			6: {ID: 6},
+		},
+		givenEdge: edge{5, 1},
+		expect:    []int64{4, 5},
+	}, {
+		should: "return nil for no cycle in more complicated graph",
+		givenMap: map[int64]message.Intention{
+			1: {ID: 1, Deps: []int64{2, 3, 4}},
+			2: {ID: 2, Deps: []int64{4, 6}},
+			3: {ID: 3, Deps: []int64{4}},
+			4: {ID: 4, Deps: []int64{5}},
+			5: {ID: 5},
+			6: {ID: 6},
+		},
+		givenEdge: edge{6, 4},
+	}} {
+		c.Logf("test %d: should %s", i, test.should)
+		got := scheduler.CheckCycle(
+			test.givenMap,
+			test.givenEdge.from,
+			test.givenEdge.to,
+		)
+		c.Check(got, jc.DeepEquals, test.expect)
 	}
 }
