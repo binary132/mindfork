@@ -1,4 +1,4 @@
-package scheduler
+package kernel
 
 import "github.com/mindfork/mindfork/core/message"
 

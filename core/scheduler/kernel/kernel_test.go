@@ -1,23 +1,23 @@
-package scheduler_test
+package kernel_test
 
 import (
 	"errors"
 
-	"github.com/mindfork/mindfork/core"
 	"github.com/mindfork/mindfork/core/message"
 	"github.com/mindfork/mindfork/core/scheduler"
+	"github.com/mindfork/mindfork/core/scheduler/kernel"
 	mfm "github.com/mindfork/mindfork/message"
 
 	jc "github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
 )
 
-var _ = core.Scheduler(&scheduler.Kernel{})
+var _ = scheduler.Scheduler(&kernel.Kernel{})
 
 //TODO: test Roots
 //TODO: test Free
 
-func (cs *SchedulerSuite) TestKernelAdd(c *C) {
+func (cs *KernelSuite) TestKernelAdd(c *C) {
 	for i, test := range []struct {
 		should string
 		given  []message.Intention
@@ -81,7 +81,7 @@ func (cs *SchedulerSuite) TestKernelAdd(c *C) {
 			i, test.should, test.given, test.expect,
 		)
 
-		k := &scheduler.Kernel{
+		k := &kernel.Kernel{
 			Intentions: make(map[int64]message.Intention),
 			Roots:      make(map[int64]message.Intention),
 			Free:       make(map[int64]message.Intention),
@@ -97,11 +97,12 @@ func (cs *SchedulerSuite) TestKernelAdd(c *C) {
 	}
 }
 
-func (s *SchedulerSuite) TestKernelAvailable(c *C) {
+func (s *KernelSuite) TestKernelAvailable(c *C) {
 	for i, test := range []struct {
-		should string
-		given  []message.Intention
-		expect []message.Intention
+		should        string
+		given         []message.Intention
+		givenOrdering scheduler.Ordering
+		expect        []message.Intention
 	}{{
 		should: "show a few free Intentions",
 		given:  []message.Intention{{}, {}, {}},
@@ -137,7 +138,7 @@ func (s *SchedulerSuite) TestKernelAvailable(c *C) {
 	}} {
 		c.Logf("test %d: should %s", i, test.should)
 
-		k := &scheduler.Kernel{
+		k := &kernel.Kernel{
 			Intentions: make(map[int64]message.Intention),
 			Roots:      make(map[int64]message.Intention),
 			Free:       make(map[int64]message.Intention),
@@ -147,11 +148,11 @@ func (s *SchedulerSuite) TestKernelAvailable(c *C) {
 			k.Add(i)
 		}
 
-		c.Check(k.Available(), jc.DeepEquals, test.expect)
+		c.Check(k.Available(test.givenOrdering), jc.DeepEquals, test.expect)
 	}
 }
 
-func (s *SchedulerSuite) TestCheckCycle(c *C) {
+func (s *KernelSuite) TestCheckCycle(c *C) {
 	type edge struct {
 		from int64
 		to   int64
@@ -238,7 +239,7 @@ func (s *SchedulerSuite) TestCheckCycle(c *C) {
 		givenEdge: edge{6, 4},
 	}} {
 		c.Logf("test %d: should %s", i, test.should)
-		got := scheduler.CheckCycle(
+		got := kernel.CheckCycle(
 			test.givenMap,
 			test.givenEdge.from,
 			test.givenEdge.to,

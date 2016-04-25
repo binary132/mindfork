@@ -6,6 +6,7 @@ import (
 
 	"github.com/mindfork/mindfork/core/message"
 	"github.com/mindfork/mindfork/core/scheduler"
+	"github.com/mindfork/mindfork/core/scheduler/kernel"
 	mfm "github.com/mindfork/mindfork/message"
 )
 
@@ -17,12 +18,12 @@ type Timer interface {
 // Core is a base implementation of Server.
 type Core struct {
 	Timer
-	Scheduler
+	scheduler.Scheduler
 }
 
 // Default returns a Core using a new scheduler.Kernel.
 func Default() *Core {
-	return &Core{Scheduler: &scheduler.Kernel{
+	return &Core{Scheduler: &kernel.Kernel{
 		Intentions: make(map[int64]message.Intention),
 		Roots:      make(map[int64]message.Intention),
 		Free:       make(map[int64]message.Intention),

@@ -1,4 +1,4 @@
-package scheduler_test
+package kernel_test
 
 import (
 	"testing"
@@ -9,6 +9,6 @@ import (
 // Test hooks up gocheck into the "go test" runner.
 func Test(t *testing.T) { TestingT(t) }
 
-type SchedulerSuite struct{}
+type KernelSuite struct{}
 
-var _ = Suite(&SchedulerSuite{})
+var _ = Suite(&KernelSuite{})

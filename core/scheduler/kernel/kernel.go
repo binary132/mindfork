@@ -1,4 +1,4 @@
-package scheduler
+package kernel
 
 import (
 	"fmt"
@@ -6,19 +6,21 @@ import (
 	"sync"
 
 	"github.com/mindfork/mindfork/core/message"
+	"github.com/mindfork/mindfork/core/scheduler"
 	mfm "github.com/mindfork/mindfork/message"
 )
 
-type defaultSort []message.Intention
+type intentions []message.Intention
+type byID []message.Intention
 
 // Len implements Interface.Len on defaultSort.
-func (d defaultSort) Len() int { return len(d) }
-
-// Less implements Interface.Less on defaultSort.
-func (d defaultSort) Less(i, j int) bool { return d[i].ID < d[j].ID }
+func (i intentions) Len() int { return len(i) }
 
 // Swap implements Interface.Swap on defaultSort.
-func (d defaultSort) Swap(i, j int) { d[i], d[j] = d[j], d[i] }
+func (i intentions) Swap(j, k int) { i[j], i[k] = i[k], i[j] }
+
+// Less implements Interface.Less on byID.
+func (b byID) Less(i, j int) bool { return b[i].ID < b[j].ID }
 
 // Kernel is the core Scheduler implementation.  It holds Intentions in volatile
 // memory.
@@ -43,8 +45,10 @@ func (k *Kernel) Add(i message.Intention) mfm.Message {
 }
 
 // Available implements Scheduler.Available on Kernel.
-func (k *Kernel) Available() []message.Intention {
+func (k *Kernel) Available(o scheduler.Ordering) []message.Intention {
+
 	k.RLock()
+
 	result := make([]message.Intention, len(k.Free))
 	i := 0
 	for _, in := range k.Free {
@@ -53,7 +57,15 @@ func (k *Kernel) Available() []message.Intention {
 	}
 	k.RUnlock()
 
-	sort.Sort(defaultSort(result))
+	ord := o
+	if ord == nil {
+		ord = byID(result)
+	}
+
+	sort.Sort(struct {
+		intentions
+		scheduler.Ordering
+	}{result, ord})
 
 	return result
 }
