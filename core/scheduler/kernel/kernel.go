@@ -213,14 +213,27 @@ func (k *Kernel) addExisting(i message.Intention) mfm.Message {
 	// Any old deps that weren't seen in the new deps might be new roots.
 	for _, dep := range old.Deps {
 		oldSeen[dep] = true
+		if seen[dep] {
+			continue
+		}
+		child := k.intentions[dep]
 		// If the child had only one parent, this was that parent.  If
 		// this does not have that child as a dep any more, the child is
 		// therefore orphaned and is a new root.
-		if !seen[dep] && len(k.intentions[dep].parents) == 1 {
-			newRoot := k.intentions[dep]
-			newRoot.parents = nil
-			k.intentions[dep] = newRoot
-			k.roots[dep] = newRoot
+		if lp := len(child.parents); lp == 1 {
+			child.parents = nil
+			k.intentions[dep] = child
+			k.roots[dep] = child
+		} else if lp > 1 {
+			// Find the parent and remove it.
+		removeParent:
+			for iter, p := range child.parents {
+				if p == newNode.ID {
+					child.parents = append(child.parents[:iter], child.parents[iter+1:]...)
+					k.intentions[dep] = child
+					break removeParent
+				}
+			}
 		}
 	}
 

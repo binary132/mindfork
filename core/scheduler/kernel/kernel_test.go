@@ -49,6 +49,35 @@ func (s *KernelSuite) TestRoots(c *C) {
 			4: message.Intention{ID: 4, Deps: []int64{3}},
 		},
 	}, {
+		should: "make an orphaned child of two parents into a root",
+		given: []message.Intention{
+			{}, {}, {},
+			{ID: 1, Deps: []int64{3}},
+			{ID: 2, Deps: []int64{3}},
+			{ID: 1},
+			{ID: 2},
+		},
+		expect: map[int64]message.Intention{
+			1: message.Intention{ID: 1},
+			2: message.Intention{ID: 2},
+			3: message.Intention{ID: 3},
+		},
+	}, {
+		should: "make two orphaned children of a parent into roots",
+		given: []message.Intention{
+			{}, {}, {}, {},
+			{ID: 1, Deps: []int64{3, 4}},
+			{ID: 2, Deps: []int64{3, 4}},
+			{ID: 1},
+			{ID: 2},
+		},
+		expect: map[int64]message.Intention{
+			1: message.Intention{ID: 1},
+			2: message.Intention{ID: 2},
+			3: message.Intention{ID: 3},
+			4: message.Intention{ID: 4},
+		},
+	}, {
 		should: "make and split a tree into two",
 		given: []message.Intention{
 			{}, {}, {},
