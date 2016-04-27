@@ -16,7 +16,7 @@ func (ts *MessageSuite) TestEncode(c *C) {
 	}{{
 		should: "marshal a simple Intention using JSON",
 		given:  coremsg.Intention{},
-		expect: `{"ID":0,"Who":"","What":""}`,
+		expect: `{}`,
 	}} {
 		c.Logf("test %d: should %s", i, test.should)
 		c.Logf("  given: %v", test.given)

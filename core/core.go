@@ -23,11 +23,7 @@ type Core struct {
 
 // Default returns a Core using a new scheduler.Kernel.
 func Default() *Core {
-	return &Core{Scheduler: &kernel.Kernel{
-		Intentions: make(map[int64]message.Intention),
-		Roots:      make(map[int64]message.Intention),
-		Free:       make(map[int64]message.Intention),
-	}}
+	return &Core{Scheduler: kernel.New()}
 }
 
 // Now implements Timer.Now for Core.

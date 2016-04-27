@@ -17,6 +17,74 @@ var _ = scheduler.Scheduler(&kernel.Kernel{})
 //TODO: test Roots
 //TODO: test Free
 
+func (s *KernelSuite) TestKernelRoots(c *C) {
+	for i, test := range []struct {
+		should string
+		given  []message.Intention
+		expect map[int64]message.Intention
+	}{{
+		should: "make a few new roots",
+		given:  []message.Intention{{}, {}, {}},
+		expect: map[int64]message.Intention{
+			1: message.Intention{ID: 1},
+			2: message.Intention{ID: 2},
+			3: message.Intention{ID: 3},
+		},
+	}, {
+		should: "make and remove a few roots",
+		given:  []message.Intention{{}, {}, {ID: 2, Deps: []int64{1}}},
+		expect: map[int64]message.Intention{
+			2: message.Intention{ID: 2, Deps: []int64{1}},
+		},
+	}, {
+		should: "show only one root for a tree",
+		given: []message.Intention{
+			{},
+			{Deps: []int64{1}},
+			{Deps: []int64{2}},
+			{Deps: []int64{3}},
+		},
+		expect: map[int64]message.Intention{
+			4: message.Intention{ID: 4, Deps: []int64{3}},
+		},
+	}, {
+		should: "make and split a tree into two",
+		given: []message.Intention{
+			{}, {}, {},
+			{Deps: []int64{1, 2, 3}},
+			{Deps: []int64{4}},
+			{ID: 5, Deps: []int64{1, 2, 3}},
+		},
+		expect: map[int64]message.Intention{
+			4: message.Intention{ID: 4, Deps: []int64{1, 2, 3}},
+			5: message.Intention{ID: 5, Deps: []int64{1, 2, 3}},
+		},
+	}, {
+		should: "make a tree, split it into two, and rejoin it",
+		given: []message.Intention{
+			{}, {},
+			{Deps: []int64{1, 2}},
+			{Deps: []int64{3}},
+			{},
+			{ID: 4, Deps: []int64{1, 2}},
+			{ID: 3, Deps: []int64{4, 5}},
+		},
+		expect: map[int64]message.Intention{
+			3: message.Intention{ID: 3, Deps: []int64{4, 5}},
+		},
+	}} {
+		c.Logf("test %d: should %s", i, test.should)
+
+		k := kernel.New()
+
+		for _, i := range test.given {
+			k.Add(i)
+		}
+
+		c.Check(kernel.Roots(k), jc.DeepEquals, test.expect)
+	}
+}
+
 func (cs *KernelSuite) TestKernelAdd(c *C) {
 	for i, test := range []struct {
 		should string
@@ -81,11 +149,7 @@ func (cs *KernelSuite) TestKernelAdd(c *C) {
 			i, test.should, test.given, test.expect,
 		)
 
-		k := &kernel.Kernel{
-			Intentions: make(map[int64]message.Intention),
-			Roots:      make(map[int64]message.Intention),
-			Free:       make(map[int64]message.Intention),
-		}
+		k := kernel.New()
 
 		result := make([]mfm.Message, len(test.given))
 
@@ -138,11 +202,7 @@ func (s *KernelSuite) TestKernelAvailable(c *C) {
 	}} {
 		c.Logf("test %d: should %s", i, test.should)
 
-		k := &kernel.Kernel{
-			Intentions: make(map[int64]message.Intention),
-			Roots:      make(map[int64]message.Intention),
-			Free:       make(map[int64]message.Intention),
-		}
+		k := kernel.New()
 
 		for _, i := range test.given {
 			k.Add(i)
