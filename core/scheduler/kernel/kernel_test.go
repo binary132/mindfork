@@ -14,10 +14,11 @@ import (
 
 var _ = scheduler.Scheduler(&kernel.Kernel{})
 
-//TODO: test Roots
 //TODO: test Free
 
-func (s *KernelSuite) TestKernelRoots(c *C) {
+func (s *KernelSuite) TestBlockedBounty(c *C) {}
+
+func (s *KernelSuite) TestRoots(c *C) {
 	for i, test := range []struct {
 		should string
 		given  []message.Intention
@@ -85,7 +86,7 @@ func (s *KernelSuite) TestKernelRoots(c *C) {
 	}
 }
 
-func (cs *KernelSuite) TestKernelAdd(c *C) {
+func (cs *KernelSuite) TestAdd(c *C) {
 	for i, test := range []struct {
 		should string
 		given  []message.Intention
@@ -161,7 +162,7 @@ func (cs *KernelSuite) TestKernelAdd(c *C) {
 	}
 }
 
-func (s *KernelSuite) TestKernelAvailable(c *C) {
+func (s *KernelSuite) TestAvailable(c *C) {
 	for i, test := range []struct {
 		should        string
 		given         []message.Intention
