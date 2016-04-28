@@ -150,72 +150,57 @@ func (s *KernelSuite) TestParentBountyExisting(c *C) {
 			2: {ParentBounties: 3},
 			3: {ParentBounties: 0},
 		},
-		// }, {
-		// 	given: []message.Intention{
-		// 		{Bounty: 1},
-		// 		{Bounty: 2, Deps: []int64{1}},
-		// 		{Bounty: 3, Deps: []int64{2}},
-		// 		{Bounty: 4, Deps: []int64{2}},
-		// 	},
-		// 	expect: map[int64]kernel.Node{
-		// 		1: {ParentBounties: 9},
-		// 		2: {ParentBounties: 7},
-		// 		3: {ParentBounties: 0},
-		// 		4: {ParentBounties: 0},
-		// 	},
-		// }, {
-		// 	given: []message.Intention{
-		// 		{Bounty: 1},
-		// 		{Bounty: 2, Deps: []int64{1}},
-		// 		{Bounty: 3, Deps: []int64{1}},
-		// 		{Bounty: 4, Deps: []int64{2}},
-		// 	},
-		// 	expect: map[int64]kernel.Node{
-		// 		1: {ParentBounties: 9},
-		// 		2: {ParentBounties: 4},
-		// 		3: {ParentBounties: 0},
-		// 		4: {ParentBounties: 0},
-		// 	},
-		// }, {
-		// 	given: []message.Intention{
-		// 		{Bounty: 1},
-		// 		{Bounty: 2, Deps: []int64{1}},
-		// 		{Bounty: 3, Deps: []int64{1}},
-		// 		{Bounty: 4, Deps: []int64{2}},
-		// 	},
-		// 	expect: map[int64]kernel.Node{
-		// 		1: {ParentBounties: 9},
-		// 		2: {ParentBounties: 4},
-		// 		3: {ParentBounties: 0},
-		// 		4: {ParentBounties: 0},
-		// 	},
-		// }, {
-		// 	given: []message.Intention{
-		// 		{Bounty: 1},
-		// 		{Bounty: 1},
-		// 		{Bounty: 1},
-		// 		{Bounty: 1},
-		// 		{Bounty: 1, Deps: []int64{1}},
-		// 		{Bounty: 1, Deps: []int64{1, 2}},
-		// 		{Bounty: 1, Deps: []int64{2, 3}},
-		// 		{Bounty: 1, Deps: []int64{4}},
-		// 		{Bounty: 1, Deps: []int64{4, 5}},
-		// 		{Bounty: 1, Deps: []int64{2}},
-		// 		{Bounty: 1, Deps: []int64{2, 3}},
-		// 	},
-		// 	expect: map[int64]kernel.Node{
-		// 		1:  {ParentBounties: 3},
-		// 		2:  {ParentBounties: 4},
-		// 		3:  {ParentBounties: 2},
-		// 		4:  {ParentBounties: 2},
-		// 		5:  {ParentBounties: 1},
-		// 		6:  {ParentBounties: 0},
-		// 		7:  {ParentBounties: 0},
-		// 		8:  {ParentBounties: 0},
-		// 		9:  {ParentBounties: 0},
-		// 		10: {ParentBounties: 0},
-		// 		11: {ParentBounties: 0},
-		// 	},
+	}, {
+		given: []message.Intention{
+			{}, {}, {}, {},
+			{Bounty: 2, Deps: []int64{1, 2}},
+			{Bounty: 3, Deps: []int64{3, 4}},
+			{Bounty: 5, Deps: []int64{5, 6}},
+			{ID: 7, Bounty: 3, Deps: []int64{5, 6}},
+		},
+		expect: map[int64]kernel.Node{
+			1: {ParentBounties: 5},
+			2: {ParentBounties: 5},
+			3: {ParentBounties: 6},
+			4: {ParentBounties: 6},
+			5: {ParentBounties: 3},
+			6: {ParentBounties: 3},
+			7: {ParentBounties: 0},
+		},
+	}, {
+		given: []message.Intention{
+			{}, {}, {}, {},
+			{Bounty: 2, Deps: []int64{1, 2}},
+			{Bounty: 3, Deps: []int64{3, 4}},
+			{Bounty: 5, Deps: []int64{5, 6}},
+			{ID: 7, Bounty: 5},
+		},
+		expect: map[int64]kernel.Node{
+			1: {ParentBounties: 2},
+			2: {ParentBounties: 2},
+			3: {ParentBounties: 3},
+			4: {ParentBounties: 3},
+			5: {ParentBounties: 0},
+			6: {ParentBounties: 0},
+			7: {ParentBounties: 0},
+		},
+	}, {
+		given: []message.Intention{
+			{}, {}, {}, {},
+			{Bounty: 2, Deps: []int64{1, 2}},
+			{Bounty: 3, Deps: []int64{3, 4}},
+			{Bounty: 5, Deps: []int64{5, 6}},
+			{ID: 7, Bounty: 5, Deps: []int64{3, 6}},
+		},
+		expect: map[int64]kernel.Node{
+			1: {ParentBounties: 2},
+			2: {ParentBounties: 2},
+			3: {ParentBounties: 8},
+			4: {ParentBounties: 8},
+			5: {ParentBounties: 0},
+			6: {ParentBounties: 5},
+			7: {ParentBounties: 0},
+		},
 	}} {
 		c.Logf("test %d", i)
 
