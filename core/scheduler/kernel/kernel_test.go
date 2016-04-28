@@ -15,11 +15,58 @@ import (
 var _ = scheduler.Scheduler(&kernel.Kernel{})
 
 //TODO: test Free
+//TODO: revise / test Orderings
 
-func (s *KernelSuite) TestBlockedBounty(c *C) {}
+func (s *KernelSuite) TestParentBounty(c *C) {
+	for i, t := range []struct {
+		given  []message.Intention
+		expect map[int64]kernel.Node
+	}{{
+		given: []message.Intention{
+			{Bounty: 1},
+			{Bounty: 2, Deps: []int64{1}},
+		},
+		expect: map[int64]kernel.Node{
+			1: {ParentBounties: 2},
+			2: {ParentBounties: 0},
+		},
+	}, {
+		given: []message.Intention{
+			{Bounty: 1},
+			{Bounty: 2, Deps: []int64{1}},
+			{Bounty: 3, Deps: []int64{1}},
+		},
+		expect: map[int64]kernel.Node{
+			1: {ParentBounties: 5},
+			2: {ParentBounties: 0},
+			3: {ParentBounties: 0},
+		},
+	}, {
+		given: []message.Intention{
+			{Bounty: 1},
+			{Bounty: 2, Deps: []int64{1}},
+			{Bounty: 3, Deps: []int64{2}},
+		},
+		expect: map[int64]kernel.Node{
+			1: {ParentBounties: 5},
+			2: {ParentBounties: 3},
+			3: {ParentBounties: 0},
+		},
+	}} {
+		c.Logf("test %d", i)
+
+		k := kernel.New()
+
+		for _, in := range t.given {
+			k.Add(in)
+		}
+
+		c.Check(kernel.Nodes(k), jc.DeepEquals, t.expect)
+	}
+}
 
 func (s *KernelSuite) TestRoots(c *C) {
-	for i, test := range []struct {
+	for i, t := range []struct {
 		should string
 		given  []message.Intention
 		expect map[int64]message.Intention
@@ -103,20 +150,20 @@ func (s *KernelSuite) TestRoots(c *C) {
 			3: message.Intention{ID: 3, Deps: []int64{4, 5}},
 		},
 	}} {
-		c.Logf("test %d: should %s", i, test.should)
+		c.Logf("test %d: should %s", i, t.should)
 
 		k := kernel.New()
 
-		for _, i := range test.given {
+		for _, i := range t.given {
 			k.Add(i)
 		}
 
-		c.Check(kernel.Roots(k), jc.DeepEquals, test.expect)
+		c.Check(kernel.Roots(k), jc.DeepEquals, t.expect)
 	}
 }
 
 func (cs *KernelSuite) TestAdd(c *C) {
-	for i, test := range []struct {
+	for i, t := range []struct {
 		should string
 		given  []message.Intention
 		expect []mfm.Message
@@ -176,23 +223,23 @@ func (cs *KernelSuite) TestAdd(c *C) {
 		},
 	}} {
 		c.Logf("test %d: should %s\n  given: %v\n  expect: %v",
-			i, test.should, test.given, test.expect,
+			i, t.should, t.given, t.expect,
 		)
 
 		k := kernel.New()
 
-		result := make([]mfm.Message, len(test.given))
+		result := make([]mfm.Message, len(t.given))
 
-		for i, in := range test.given {
+		for i, in := range t.given {
 			result[i] = k.Add(in)
 		}
 
-		c.Check(result, jc.DeepEquals, test.expect)
+		c.Check(result, jc.DeepEquals, t.expect)
 	}
 }
 
 func (s *KernelSuite) TestAvailable(c *C) {
-	for i, test := range []struct {
+	for i, t := range []struct {
 		should        string
 		given         []message.Intention
 		givenOrdering scheduler.Ordering
@@ -230,15 +277,15 @@ func (s *KernelSuite) TestAvailable(c *C) {
 			message.Intention{ID: 2},
 		},
 	}} {
-		c.Logf("test %d: should %s", i, test.should)
+		c.Logf("test %d: should %s", i, t.should)
 
 		k := kernel.New()
 
-		for _, i := range test.given {
+		for _, i := range t.given {
 			k.Add(i)
 		}
 
-		c.Check(k.Available(test.givenOrdering), jc.DeepEquals, test.expect)
+		c.Check(k.Available(t.givenOrdering), jc.DeepEquals, t.expect)
 	}
 }
 
@@ -248,7 +295,7 @@ func (s *KernelSuite) TestCheckCycle(c *C) {
 		to   int64
 	}
 
-	for i, test := range []struct {
+	for i, t := range []struct {
 		should    string
 		givenMap  map[int64]message.Intention
 		givenEdge edge
@@ -328,12 +375,12 @@ func (s *KernelSuite) TestCheckCycle(c *C) {
 		},
 		givenEdge: edge{6, 4},
 	}} {
-		c.Logf("test %d: should %s", i, test.should)
+		c.Logf("test %d: should %s", i, t.should)
 		got := kernel.CheckCycle(
-			test.givenMap,
-			test.givenEdge.from,
-			test.givenEdge.to,
+			t.givenMap,
+			t.givenEdge.from,
+			t.givenEdge.to,
 		)
-		c.Check(got, jc.DeepEquals, test.expect)
+		c.Check(got, jc.DeepEquals, t.expect)
 	}
 }

@@ -13,9 +13,9 @@ import (
 type node struct {
 	message.Intention
 
-	parents []int64
+	parents        []int64
+	parentBounties int
 	// childCosts       int
-	// parentBounties   int
 	// parentUrgency    int
 	// parentImportance int
 	// visited          bool
@@ -136,32 +136,31 @@ func (k *Kernel) addNew(i message.Intention) mfm.Message {
 	k.nextID++
 	i.ID = k.nextID
 
-	newNode := node{Intention: i}
+	newNode, newID := node{Intention: i}, i.ID
 
-	for _, child := range newNode.Deps {
+	for _, dep := range newNode.Deps {
 		// Remove the new deps from roots.
-		delete(k.roots, child)
-		// Add the current node to the child nodes' parents.
-		this := k.intentions[child]
-		this.parents = append(this.parents, newNode.ID)
-		k.intentions[child] = this
+		delete(k.roots, dep)
+		// Add the new node to the child nodes' parents.
+		this := k.intentions[dep]
+		this.parents = append(this.parents, newID)
+		k.intentions[dep] = this
 	}
 
-	// Find the new node's childCosts
-	//  walk(i.ID, func(n1, n2 node) {
-	//
-	//  })
-	//
 	// Recalculate its children's:
 	//  - parentBounties
 	//  - parentUrgency
 	//  - parentImportance
 
-	k.intentions[newNode.ID] = newNode
-	k.roots[newNode.ID] = newNode
+	k.intentions[newID] = newNode
+
+	recalculateParentBounties(k.intentions, newID)
+
+	newNode = k.intentions[newID]
+	k.roots[newID] = newNode
 
 	if len(newNode.Deps) == 0 {
-		k.free[newNode.ID] = newNode
+		k.free[newID] = newNode
 	}
 
 	return newNode.Intention
@@ -310,4 +309,103 @@ func checkCycle(graph map[int64]node, from, to int64) []int64 {
 			return nil
 		}
 	}
+}
+
+func recalculateParentBounties(graph map[int64]node, id int64) {
+	var (
+		seen = make(map[int64]bool)
+
+		// We will explore downward from the given node to find
+		// everything that needs to be recalculated.
+		curr []int64
+		next = []int64{id}
+
+		// Bases are the nodes that need to be recalculated upward from.
+		bases []int64
+	)
+
+	// Look for the base nodes in the given ID's network.
+	for len(next) != 0 {
+		curr, next = next, nil
+
+		for _, id := range curr {
+			node := graph[id]
+
+			// If this node has no deps, add it to bases.
+			if len(node.Deps) == 0 {
+				bases = append(bases, id)
+			}
+
+			// Explore downward.  If we find something we haven't
+			// seen yet, explore that next.
+			for _, dep := range node.Deps {
+				if !seen[dep] {
+					next = append(next, dep)
+				}
+			}
+
+			seen[id] = true
+		}
+	}
+
+	updateAncestors(graph, bases...)
+}
+
+// updateAncestors calculates blockedBounty of each node.  It returns a slice of
+// the ancestor map for each given ID.
+func updateAncestors(graph map[int64]node, ids ...int64) []map[int64]bool {
+	toReturn := make([]map[int64]bool, len(ids))
+
+	//   - Find the union of the sets of all ancestors of its parents.
+	//     > for each base:
+	//     > if I have parents, find and update their ancestors first.
+	//       + my ancestors = union of their ancestors and them.
+	//       + my blocked bounty = the sum of Bounties of this set.
+	for i, id := range ids {
+		node := graph[id]
+
+		if len(node.parents) == 0 {
+			toReturn[i] = nil
+			continue
+		}
+
+		ancestors := make(map[int64]bool)
+
+		for _, p := range node.parents {
+			ancestors[p] = true
+		}
+
+		ancestors = union(
+			ancestors, updateAncestors(graph, node.parents...)...,
+		)
+
+		node.parentBounties = 0
+		for id := range ancestors {
+			node.parentBounties += graph[id].Bounty
+		}
+
+		graph[id] = node
+		toReturn[i] = ancestors
+	}
+
+	return toReturn
+}
+
+// assume any overlap has identical members.
+func union(g map[int64]bool, grs ...map[int64]bool) map[int64]bool {
+	if len(grs) == 0 || len(grs) == 1 && grs[0] == nil {
+		return g
+	}
+
+	result := make(map[int64]bool)
+	for id := range g {
+		result[id] = true
+	}
+	for _, gr := range grs {
+		for id := range gr {
+			result[id] = true
+		}
+	}
+
+	return result
 }
