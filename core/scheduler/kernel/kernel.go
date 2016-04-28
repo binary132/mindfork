@@ -21,6 +21,17 @@ type node struct {
 	// visited          bool
 }
 
+func (n node) copy() node {
+	newParents := make([]int64, len(n.parents))
+	copy(newParents, n.parents)
+
+	return node{
+		Intention:      n.Intention,
+		parents:        newParents,
+		parentBounties: n.parentBounties,
+	}
+}
+
 type intentions []node
 type byID []node
 type byBounty []node
@@ -197,7 +208,10 @@ func (k *Kernel) addExisting(i message.Intention) mfm.Message {
 	}
 
 	old, oldID := k.intentions[i.ID], i.ID
-	newNode := node{Intention: i}
+	affectedIDs := []int64{oldID}
+	newNode := old.copy()
+	newNode.Intention = i
+
 	k.intentions[oldID] = newNode
 
 	seen := make(map[int64]bool)
@@ -216,6 +230,7 @@ func (k *Kernel) addExisting(i message.Intention) mfm.Message {
 			continue
 		}
 		child := k.intentions[dep]
+		affectedIDs = append(affectedIDs, dep)
 		// If the child had only one parent, this was that parent.  If
 		// this does not have that child as a dep any more, the child is
 		// therefore orphaned and is a new root.
@@ -249,7 +264,7 @@ func (k *Kernel) addExisting(i message.Intention) mfm.Message {
 		}
 	}
 
-	recalculateParentBounties(k.intentions, oldID)
+	recalculateParentBounties(k.intentions, affectedIDs...)
 	newNode = k.intentions[oldID]
 
 	// Add or remove this node from the free set.

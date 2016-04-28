@@ -1,13 +1,13 @@
 package kernel
 
-func recalculateParentBounties(graph map[int64]node, id int64) {
+func recalculateParentBounties(graph map[int64]node, ids ...int64) {
 	var (
 		seen = make(map[int64]bool)
 
 		// We will explore downward from the given node to find
 		// everything that needs to be recalculated.
 		curr []int64
-		next = []int64{id}
+		next []int64 = ids
 
 		// Bases are the nodes that need to be recalculated upward from.
 		bases []int64
@@ -53,8 +53,11 @@ func updateAncestors(graph map[int64]node, ids ...int64) []map[int64]bool {
 	for i, id := range ids {
 		node := graph[id]
 
+		node.parentBounties = 0
+
 		if len(node.parents) == 0 {
 			toReturn[i] = nil
+			graph[id] = node
 			continue
 		}
 
@@ -68,7 +71,6 @@ func updateAncestors(graph map[int64]node, ids ...int64) []map[int64]bool {
 			ancestors, updateAncestors(graph, node.parents...)...,
 		)
 
-		node.parentBounties = 0
 		for id := range ancestors {
 			node.parentBounties += graph[id].Bounty
 		}
