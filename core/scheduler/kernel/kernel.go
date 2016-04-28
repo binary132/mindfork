@@ -196,9 +196,9 @@ func (k *Kernel) addExisting(i message.Intention) mfm.Message {
 		return err
 	}
 
-	old := k.intentions[i.ID]
+	old, oldID := k.intentions[i.ID], i.ID
 	newNode := node{Intention: i}
-	k.intentions[newNode.ID] = newNode
+	k.intentions[oldID] = newNode
 
 	seen := make(map[int64]bool)
 	oldSeen := make(map[int64]bool)
@@ -227,8 +227,11 @@ func (k *Kernel) addExisting(i message.Intention) mfm.Message {
 			// Find the parent and remove it.
 		removeParent:
 			for iter, p := range child.parents {
-				if p == newNode.ID {
-					child.parents = append(child.parents[:iter], child.parents[iter+1:]...)
+				if p == oldID {
+					child.parents = append(
+						child.parents[:iter],
+						child.parents[iter+1:]...,
+					)
 					k.intentions[dep] = child
 					break removeParent
 				}
@@ -241,20 +244,23 @@ func (k *Kernel) addExisting(i message.Intention) mfm.Message {
 	for dep := range seen {
 		if !oldSeen[dep] {
 			newChild := k.intentions[dep]
-			newChild.parents = append(newChild.parents, newNode.ID)
+			newChild.parents = append(newChild.parents, oldID)
 			k.intentions[dep] = newChild
 		}
 	}
 
+	recalculateParentBounties(k.intentions, oldID)
+	newNode = k.intentions[oldID]
+
 	// Add or remove this node from the free set.
 	if len(newNode.Deps) == 0 {
-		k.free[newNode.ID] = newNode
+		k.free[oldID] = newNode
 	} else {
-		delete(k.free, newNode.ID)
+		delete(k.free, oldID)
 	}
 
 	if len(newNode.parents) == 0 {
-		k.roots[newNode.ID] = newNode
+		k.roots[oldID] = newNode
 	}
 
 	return newNode.Intention
