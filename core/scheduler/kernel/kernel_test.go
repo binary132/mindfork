@@ -17,54 +17,6 @@ var _ = scheduler.Scheduler(&kernel.Kernel{})
 //TODO: test Free
 //TODO: revise / test Orderings
 
-func (s *KernelSuite) TestParentBounty(c *C) {
-	for i, t := range []struct {
-		given  []message.Intention
-		expect map[int64]kernel.Node
-	}{{
-		given: []message.Intention{
-			{Bounty: 1},
-			{Bounty: 2, Deps: []int64{1}},
-		},
-		expect: map[int64]kernel.Node{
-			1: {ParentBounties: 2},
-			2: {ParentBounties: 0},
-		},
-	}, {
-		given: []message.Intention{
-			{Bounty: 1},
-			{Bounty: 2, Deps: []int64{1}},
-			{Bounty: 3, Deps: []int64{1}},
-		},
-		expect: map[int64]kernel.Node{
-			1: {ParentBounties: 5},
-			2: {ParentBounties: 0},
-			3: {ParentBounties: 0},
-		},
-	}, {
-		given: []message.Intention{
-			{Bounty: 1},
-			{Bounty: 2, Deps: []int64{1}},
-			{Bounty: 3, Deps: []int64{2}},
-		},
-		expect: map[int64]kernel.Node{
-			1: {ParentBounties: 5},
-			2: {ParentBounties: 3},
-			3: {ParentBounties: 0},
-		},
-	}} {
-		c.Logf("test %d", i)
-
-		k := kernel.New()
-
-		for _, in := range t.given {
-			k.Add(in)
-		}
-
-		c.Check(kernel.Nodes(k), jc.DeepEquals, t.expect)
-	}
-}
-
 func (s *KernelSuite) TestRoots(c *C) {
 	for i, t := range []struct {
 		should string
