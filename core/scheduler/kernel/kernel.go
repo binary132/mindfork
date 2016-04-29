@@ -159,13 +159,12 @@ func (k *Kernel) addNew(i message.Intention) mfm.Message {
 	}
 
 	// Recalculate its children's:
-	//  - parentBounties
 	//  - parentUrgency
 	//  - parentImportance
 
 	k.intentions[newID] = newNode
 
-	recalculateParentBounties(k.intentions, newID)
+	recalculateParentBounties(k.intentions, newNode.Deps...)
 
 	newNode = k.intentions[newID]
 	k.roots[newID] = newNode
@@ -208,7 +207,7 @@ func (k *Kernel) addExisting(i message.Intention) mfm.Message {
 	}
 
 	old, oldID := k.intentions[i.ID], i.ID
-	affectedIDs := []int64{oldID}
+	affectedIDs := append([]int64(nil), i.Deps...)
 	newNode := old.copy()
 	newNode.Intention = i
 
