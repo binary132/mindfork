@@ -5,10 +5,8 @@ import (
 	mfm "github.com/mindfork/mindfork/message"
 )
 
-// Ordering is a method that implements sort.Interface.Less.
-type Ordering interface {
-	Less(int, int) bool
-}
+// Ordering is a package constant which specifies Intention orderings.
+type Ordering int
 
 // Scheduler is a Core member which handles the scheduling of Intentions.  It
 // should be implemented in a concurrency-safe way.
