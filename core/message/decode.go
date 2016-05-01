@@ -22,7 +22,7 @@ func Decode(m []byte) (mfm.Message, error) {
 		if err := json.Unmarshal(jm.RawMessage, msg); err != nil {
 			return nil, err
 		}
-		if err := Validate(*msg); err != nil {
+		if err := msg.Validate(); err != nil {
 			return nil, err
 		}
 		return *msg, nil

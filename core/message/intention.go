@@ -22,7 +22,7 @@ type Intention struct {
 }
 
 // Validate validates an Intention.
-func Validate(i Intention) error {
+func (i Intention) Validate() error {
 	if i.Who == "" {
 		return errors.New("Intention needs a Who")
 	}
