@@ -31,7 +31,7 @@ func (n node) copy() node {
 // Kernel is the core Scheduler implementation.  It holds Intentions in volatile
 // memory.
 type Kernel struct {
-	sync.RWMutex
+	lock sync.RWMutex
 
 	roots      map[int64]node
 	intentions map[int64]node

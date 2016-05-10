@@ -9,7 +9,7 @@ import (
 
 // Available implements Scheduler.Available on Kernel.
 func (k *Kernel) Available(ord scheduler.Ordering) []message.Intention {
-	k.RLock()
+	k.lock.RLock()
 	toSort := make([]node, len(k.free))
 	result := make([]message.Intention, len(k.free))
 	i := 0
@@ -17,7 +17,7 @@ func (k *Kernel) Available(ord scheduler.Ordering) []message.Intention {
 		toSort[i] = in
 		i++
 	}
-	k.RUnlock()
+	k.lock.RUnlock()
 
 	sort.Sort(struct {
 		nodes

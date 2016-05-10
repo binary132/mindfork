@@ -18,15 +18,15 @@ func (k *Kernel) Add(i message.Intention) mfm.Message {
 }
 
 func (k *Kernel) addNew(i message.Intention) mfm.Message {
-	k.RLock()
+	k.lock.RLock()
 	if err := k.checkNew(i); err != nil {
-		k.RUnlock()
+		k.lock.RUnlock()
 		return err
 	}
-	k.RUnlock()
+	k.lock.RUnlock()
 
-	k.Lock()
-	defer k.Unlock()
+	k.lock.Lock()
+	defer k.lock.Unlock()
 
 	// Make sure that we haven't mutated the graph again in the meantime...
 	if err := k.checkNew(i); err != nil {
@@ -79,16 +79,16 @@ func (k *Kernel) checkNew(i message.Intention) mfm.Message {
 }
 
 func (k *Kernel) addExisting(i message.Intention) mfm.Message {
-	k.RLock()
+	k.lock.RLock()
 	if err := k.checkExisting(i); err != nil {
-		k.RUnlock()
+		k.lock.RUnlock()
 		return err
 	}
 
-	k.RUnlock()
+	k.lock.RUnlock()
 
-	k.Lock()
-	defer k.Unlock()
+	k.lock.Lock()
+	defer k.lock.Unlock()
 
 	// Make sure that we haven't mutated the graph again in the meantime...
 	if err := k.checkExisting(i); err != nil {
