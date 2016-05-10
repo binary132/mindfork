@@ -6,7 +6,7 @@ import (
 	"github.com/mindfork/mindfork/message"
 )
 
-// Error is a mf.Error implementing encoding/json.Marshaler.
+// Error is an alias for mf.Error implementing encoding/json.Marshaler.
 type Error message.Error
 
 // ErrStr is a simple marshalable Error struct.
@@ -25,6 +25,7 @@ func (e Error) MarshalJSON() ([]byte, error) {
 		// Otherwise, marshal it using its Error() string method.
 		return json.Marshal(ErrStr{err.Error()})
 	}
+
 	// If the inner error was nil, just use Error's Error() string method.
 	return json.Marshal(ErrStr{message.Error(e).Error()})
 }

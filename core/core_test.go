@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/mindfork/mindfork/core"
-	coremsg "github.com/mindfork/mindfork/core/message"
+	"github.com/mindfork/mindfork/core/message"
 	coretest "github.com/mindfork/mindfork/core/testing"
-	"github.com/mindfork/mindfork/message"
+	mfm "github.com/mindfork/mindfork/message"
 
 	jc "github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
@@ -30,35 +30,35 @@ func (cs *CoreSuite) TestServe(c *C) {
 
 	for i, t := range []struct {
 		should string
-		given  message.Message
-		expect message.Message
+		given  mfm.Message
+		expect mfm.Message
 	}{{
 		should: "return an error for a nil",
 		given:  nil,
 		expect: message.Error{Err: errors.New("nil Message")},
 	}, {
 		should: "return an error for a nil Message",
-		given:  message.Message(nil),
+		given:  mfm.Message(nil),
 		expect: message.Error{Err: errors.New("nil Message")},
 	}, {
 		should: "echo for an Echo",
-		given:  coremsg.Echo{},
-		expect: coremsg.Echo{When: tNow},
+		given:  message.Echo{},
+		expect: message.Echo{When: tNow},
 	}, {
 		should: "return source for a Source",
-		given:  coremsg.Source(struct{}{}),
+		given:  message.Source(struct{}{}),
 		expect: struct {
 			Source  string
 			License string
 		}{"github.com/mindfork/mindfork", "Affero GPL"},
 	}, {
 		should: "Intend for an Intention",
-		given:  coremsg.Intention{},
-		expect: coremsg.Intention{ID: 0},
+		given:  message.Intention{},
+		expect: message.Intention{ID: 0},
 	}, {
 		should: "return error for unknown type",
-		given:  message.Message(5),
-		expect: coremsg.Error{Err: errors.New("unknown Message type")},
+		given:  mfm.Message(5),
+		expect: message.Error{Err: errors.New("unknown Message type")},
 	}} {
 		c.Logf("test %d: %s", i, t.should)
 

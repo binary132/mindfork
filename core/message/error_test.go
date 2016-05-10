@@ -5,12 +5,14 @@ import (
 	"errors"
 
 	"github.com/mindfork/mindfork/core/message"
+	mfm "github.com/mindfork/mindfork/message"
 
 	jc "github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
 )
 
 var _ = json.Marshaler(&message.Error{})
+var _ = mfm.Message(&message.Error{})
 
 type marshalableError struct{}
 

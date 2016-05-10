@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	message "github.com/mindfork/mindfork/core/message"
+	"github.com/mindfork/mindfork/core/message"
 	"github.com/mindfork/mindfork/core/testing"
 	mfm "github.com/mindfork/mindfork/message"
 

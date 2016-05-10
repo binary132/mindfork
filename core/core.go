@@ -38,7 +38,7 @@ func (c *Core) Now() time.Time {
 // off control to the Message implementation if it's a Transformer.
 func (c *Core) Serve(m mfm.Message) mfm.Message {
 	if m == mfm.Message(nil) || m == nil {
-		return mfm.MakeError(errors.New("nil Message"))
+		return message.Error{Err: errors.New("nil Message")}
 	}
 
 	switch tM := m.(type) {
