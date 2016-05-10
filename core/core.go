@@ -48,6 +48,9 @@ func (c *Core) Serve(m mfm.Message) mfm.Message {
 		return Source()
 	case message.Intention:
 		return c.Add(tM)
+	case message.Fulfillment:
+		// TODO: Fix me!
+		return c.Fulfill(tM)
 	default:
 		return message.Error{Err: errors.New("unknown Message type")}
 	}

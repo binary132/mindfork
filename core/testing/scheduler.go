@@ -1,6 +1,7 @@
 package testing
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/mindfork/mindfork/core/message"
@@ -33,4 +34,9 @@ func (m *MockScheduler) Available(o scheduler.Ordering) []message.Intention {
 // Export implements core.Scheduler on MockScheduler.
 func (m *MockScheduler) Export() []message.Intention {
 	return m.Intentions
+}
+
+// Fulfill implements core.Scheduler on MockScheduler.
+func (m *MockScheduler) Fulfill(f message.Fulfillment) mfm.Message {
+	return errors.New("not implemented")
 }

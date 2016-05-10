@@ -59,6 +59,10 @@ func (cs *CoreSuite) TestServe(c *C) {
 		should: "return error for unknown type",
 		given:  mfm.Message(5),
 		expect: message.Error{Err: errors.New("unknown Message type")},
+	}, {
+		should: "serve a Fulfillment",
+		given:  message.Fulfillment{},
+		expect: errors.New("not implemented"),
 	}} {
 		c.Logf("test %d: %s", i, t.should)
 

@@ -19,7 +19,9 @@ type Scheduler interface {
 	// ordered using the given Ordering.  This slice is a copy.
 	Available(Ordering) []message.Intention
 
-	// Next gets the next
+	// Fulfill applies a Fulfillment which resolves an Intention.  This is
+	// only to be permitted if the Intention has no unresolved deps.
+	Fulfill(message.Fulfillment) mfm.Message
 
 	// // Export returns all Intentions known to the Scheduler.
 	// Export() []message.Intention

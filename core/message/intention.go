@@ -3,6 +3,8 @@ package message
 import (
 	"errors"
 	"time"
+
+	mfm "github.com/mindfork/mindfork/message"
 )
 
 // Intention is the necessary information to make a Mindfork intention.
@@ -27,4 +29,10 @@ func (i Intention) Validate() error {
 		return errors.New("Intention needs a Who")
 	}
 	return nil
+}
+
+// Fulfill fulfills the given Intention with the given Fulfillment.  If it
+// succeeds, it will generate a new slice of Messages to be Served.
+func (i *Intention) Fulfill(f Fulfillment) ([]mfm.Message, error) {
+	return nil, errors.New("not implemented")
 }
